@@ -1,0 +1,11 @@
+{
+    "require": {
+        "phpoffice/phpspreadsheet": "^1.29",
+        "tecnickcom/tcpdf": "^6.10"
+    },
+    "config": {
+        "platform": {
+            "php": "8.2.4"
+        }
+    }
+}

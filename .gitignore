@@ -1,0 +1,74 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.sublime-*
+*.sublime-project
+*.sublime-workspace
+*.sublime-settings
+
+# Dependency directories
+/vendor/
+/node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+/storage/logs/*.log
+
+# Cache
+/cache/
+*.cache
+
+# Build files
+/build/
+/dist/
+
+# Local development
+*.local
+
+# IDE specific files
+.idea/
+*.sublime-*
+
+# Composer
+composer.lock
+composer.phar
+
+# PHPUnit
+/phpunit.xml
+/phpunit.xml.dist
+
+# Local configuration
+/config.php
+!config.php.example
+
+# Local config with credentials
+config.php
+
+# Uploads
+/public/uploads/
+
+# System Files
+.htaccess
+.htpasswd
+
+# Debug
+/debug/
+
+# Backup files
+*.bak
+*.swp
+*~
