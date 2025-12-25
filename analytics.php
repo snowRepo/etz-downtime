@@ -169,11 +169,23 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
     <?php include 'includes/navbar.php'; ?>
     
     <div class="container mx-auto px-4 py-8">
+        <!-- Header with title and export button -->
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-2xl font-bold text-gray-800">Analytics</h1>
             
-            <!-- Date Range Picker -->
-            <form method="GET" class="flex items-center space-x-4">
+            <!-- PDF Export Button -->
+            <a href="export_analytics_pdf.php?company_id=<?= $companyId ? htmlspecialchars($companyId) : '' ?>&start_date=<?= htmlspecialchars($startDate) ?>&end_date=<?= htmlspecialchars($endDate) ?>" 
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                Export PDF
+            </a>
+        </div>
+        
+        <!-- Date Range Picker and Filters -->
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-8">
+            <form method="GET" class="flex flex-wrap items-end gap-4">
                 <div class="flex items-center space-x-2">
                     <label class="text-sm font-medium text-gray-700">Company:</label>
                     <div class="relative">
