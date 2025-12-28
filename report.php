@@ -195,84 +195,90 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Incident - eTranzact</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
+    <!-- Tailwind CSS v3.4.17 -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    
+    <!-- Alpine.js v3.x -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        .select2-container--default .select2-selection--multiple {
-            min-height: 42px;
-            padding: 5px 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
+        * {
+            font-family: 'Inter', sans-serif;
         }
-        .select2-container--default .select2-selection--multiple .select2-selection__choice {
-            background-color: #3b82f6;
-            border: 1px solid #2563eb;
-            color: white;
-            padding: 2px 8px;
-            margin-top: 5px;
-            border-radius: 0.25rem;
-        }
-        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-            color: white;
-            margin-right: 5px;
+        
+        .form-input:focus {
+            transition: all 0.15s ease;
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
 
     <!-- Main Content -->
-    <main class="py-6">
+    <main class="py-8">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                <div class="px-4 pt-4 pb-2 sm:px-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+            <div class="bg-white border border-gray-200 overflow-hidden rounded-xl" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+                <div class="px-6 py-5 sm:px-8 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">
                         Report New Incident
                     </h3>
-                    <p class="text-sm text-gray-500">
-                        Please fill in the details below to report a new incident.
+                    <p class="text-sm text-gray-600 mt-1">
+                        Fill in the details below to report a new downtime incident
                     </p>
                 </div>
                 
                 <?php if (!empty($error)): ?>
-                    <div class="bg-red-50 border-l-4 border-red-400 p-4 mx-6 mb-6">
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mx-6 mt-6 rounded-r-lg animate-slide-in">
                         <div class="flex">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-exclamation-circle text-red-400"></i>
+                                <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-red-700"><?php echo htmlspecialchars($error); ?></p>
+                                <p class="text-sm font-medium text-red-800"><?php echo htmlspecialchars($error); ?></p>
                             </div>
                         </div>
                     </div>
                 <?php endif; ?>
                 
                 <?php if (isset($_SESSION['success'])): ?>
-                    <div class="bg-green-50 border-l-4 border-green-400 p-4 mx-6 mb-6">
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 mx-6 mt-6 rounded-r-lg animate-slide-in">
                         <div class="flex">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-check-circle text-green-400"></i>
+                                <i class="fas fa-check-circle text-green-500 text-xl"></i>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-green-700"><?php echo htmlspecialchars($_SESSION['success']); ?></p>
+                                <p class="text-sm font-medium text-green-800"><?php echo htmlspecialchars($_SESSION['success']); ?></p>
                             </div>
                         </div>
                     </div>
                     <?php unset($_SESSION['success']); ?>
                 <?php endif; ?>
 
-                <form action="report.php" method="POST" class="px-6 pb-6 space-y-4">
+                <form action="report.php" method="POST" class="px-6 pb-8 pt-6 sm:px-8 space-y-6">
                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                    
                     <!-- Reporter Name -->
                     <div>
-                        <label for="user_name" class="block text-sm font-medium text-gray-700">
-                            Your Name <span class="text-red-500">*</span>
+                        <label for="user_name" class="block text-sm font-medium text-gray-700 mb-2">
+                            Your Name <span class="text-red-600">*</span>
                         </label>
-                        <input type="text" name="user_name" id="user_name" required
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                            value="<?php echo isset($_POST['user_name']) ? sanitize($_POST['user_name']) : ''; ?>">
+                        <input type="text" 
+                               name="user_name" 
+                               id="user_name" 
+                               required
+                               class="form-input block w-full border-gray-300 rounded-lg shadow-sm py-2.5 px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
+                               placeholder="Enter your full name"
+                               value="<?php echo isset($_POST['user_name']) ? sanitize($_POST['user_name']) : ''; ?>">
                     </div>
 
                     <!-- Service Selection -->

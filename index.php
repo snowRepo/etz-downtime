@@ -56,227 +56,312 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>eTranzact - Downtime Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS v3.4.17 -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    
+    <!-- Alpine.js v3.x -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        .stat-card {
-            transition: transform 0.3s ease;
+        * {
+            font-family: 'Inter', sans-serif;
         }
+        
+        .stat-card {
+            transition: box-shadow 0.15s ease;
+        }
+        
         .stat-card:hover {
-            transform: translateY(-5px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+        }
+        
+        .table-row-hover {
+            transition: background-color 0.15s ease;
+        }
+        
+        .table-row-hover:hover {
+            background-color: #f9fafb;
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
 
     <!-- Main Content -->
-    <main class="pt-4 pb-10">
+    <main class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+                <p class="mt-1 text-sm text-gray-600">Monitor and manage downtime incidents across all services</p>
+            </div>
+            
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 gap-5 mt-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+                
                 <!-- Total Incidents Card -->
-                <div class="stat-card bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-7">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-blue-500 rounded-md p-4">
-                                <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
+                <div class="stat-card bg-white border border-gray-200 overflow-hidden rounded-xl" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                                    Total Incidents
+                                </p>
+                                <p class="mt-2 text-3xl font-semibold text-gray-900">
+                                    <?php echo $total; ?>
+                                </p>
                             </div>
-                            <div class="ml-6 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">
-                                        Total Incidents
-                                    </dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-3xl font-semibold text-gray-900">
-                                            <?php echo $total; ?>
-                                        </div>
-                                    </dd>
-                                </dl>
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                </div>
                             </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-xs text-gray-500">All reported issues</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Resolved Incidents Card -->
-                <div class="stat-card bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-7">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-green-500 rounded-md p-4">
-                                <i class="fas fa-check-circle text-white text-2xl"></i>
+                <div class="stat-card bg-white border border-gray-200 overflow-hidden rounded-xl" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                                    Resolved
+                                </p>
+                                <p class="mt-2 text-3xl font-semibold text-gray-900">
+                                    <?php echo $resolved; ?>
+                                </p>
                             </div>
-                            <div class="ml-6 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">
-                                        Resolved
-                                    </dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-3xl font-semibold text-gray-900">
-                                            <?php echo $resolved; ?>
-                                        </div>
-                                    </dd>
-                                </dl>
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
                             </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-xs text-gray-500">
+                                <span class="text-green-600 font-medium">
+                                    <?php echo $total > 0 ? round(($resolved / $total) * 100, 1) : 0; ?>%
+                                </span>
+                                resolution rate
+                            </p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Pending Incidents Card -->
-                <div class="stat-card bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-7">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-yellow-500 rounded-md p-4">
-                                <i class="fas fa-clock text-white text-2xl"></i>
+                <div class="stat-card bg-white border border-gray-200 overflow-hidden rounded-xl" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                                    Pending
+                                </p>
+                                <p class="mt-2 text-3xl font-semibold text-gray-900">
+                                    <?php echo $pending; ?>
+                                </p>
                             </div>
-                            <div class="ml-6 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">
-                                        Pending
-                                    </dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-3xl font-semibold text-gray-900">
-                                            <?php echo $pending; ?>
-                                        </div>
-                                    </dd>
-                                </dl>
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
                             </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-xs text-gray-500">Awaiting resolution</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Recent Incidents Table -->
-            <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
-                <div class="px-4 py-5 sm:px-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+            <div class="bg-white border border-gray-200 overflow-hidden rounded-xl" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+                <div class="px-6 py-5 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">
                         Recent Incidents
                     </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        A list of recent downtime incidents.
+                    <p class="mt-1 text-sm text-gray-600">
+                        Latest downtime incidents across all services
                     </p>
                 </div>
-                <div class="border-t border-gray-200">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Service
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Affected Companies
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Date Reported
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Date Resolved
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Status
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php if (empty($recent_incidents)): ?>
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Affected Companies</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Date Reported</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Date Resolved</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <td colspan="5" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                                            <p class="text-sm font-medium text-gray-500">No incidents found</p>
+                                            <p class="text-xs text-gray-400 mt-1">All systems operational</p>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <?php if (empty($recent_incidents)): ?>
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No incidents found</td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php foreach ($recent_incidents as $incident): 
-                                        // Get the first status from the comma-separated list as the main status for display
-                                        $statuses = !empty($incident['statuses']) ? explode(',', $incident['statuses']) : [];
-                                        $mainStatus = !empty($statuses) ? $statuses[0] : '';
-                                        
-                                        $statusClass = [
-                                            'pending' => 'bg-yellow-100 text-yellow-800',
-                                            'resolved' => 'bg-green-100 text-green-800',
-                                            'investigating' => 'bg-blue-100 text-blue-800'
-                                        ][$mainStatus] ?? 'bg-gray-100 text-gray-800';
-                                    ?>
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
-                                                <?php echo htmlspecialchars($incident['service_name']); ?>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-gray-500 text-center">
-                                                <?php 
-                                                    $companies = !empty($incident['company_names']) ? explode(',', $incident['company_names']) : [];
-                                                    $total_companies = count($companies);
-                                                    $display_limit = 3;
+                            <?php else: ?>
+                                <?php foreach ($recent_incidents as $incident): 
+                                    // Get the first status from the comma-separated list as the main status for display
+                                    $statuses = !empty($incident['statuses']) ? explode(',', $incident['statuses']) : [];
+                                    $mainStatus = !empty($statuses) ? $statuses[0] : '';
+                                    
+                                    $statusClass = [
+                                        'pending' => 'bg-yellow-100 text-yellow-800',
+                                        'resolved' => 'bg-green-100 text-green-800',
+                                        'investigating' => 'bg-blue-100 text-blue-800'
+                                    ][$mainStatus] ?? 'bg-gray-100 text-gray-800';
+                                ?>
+                                    <tr class="table-row-hover">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-9 w-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+                                                    </svg>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <div class="text-sm font-medium text-gray-900">
+                                                        <?php echo htmlspecialchars($incident['service_name']); ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <?php 
+                                                $companies = !empty($incident['company_names']) ? explode(',', $incident['company_names']) : [];
+                                                $total_companies = count($companies);
+                                                $display_limit = 3;
+                                                
+                                                if ($total_companies > 0) {
+                                                    echo '<div class="flex flex-wrap gap-1.5">';
                                                     
-                                                    if ($total_companies > 0) {
-                                                        echo '<div class="flex flex-wrap justify-center gap-1">';
-                                                        
-                                                        // Display up to the limit or total, whichever is smaller
-                                                        $display_count = min($display_limit, $total_companies);
-                                                        for ($i = 0; $i < $display_count; $i++) {
-                                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">' . 
-                                                                 htmlspecialchars(trim($companies[$i])) . 
-                                                                 '</span>';
-                                                        }
-                                                        
-                                                        // Add ellipsis if there are more companies
-                                                        if ($total_companies > $display_limit) {
-                                                            $remaining = $total_companies - $display_limit;
-                                                            echo '<span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-500" title="' . 
-                                                                 htmlspecialchars('And ' . $remaining . ' more...') . '">
-                                                                    +' . $remaining . '...
-                                                                  </span>';
-                                                        }
-                                                        
-                                                        echo '</div>';
-                                                    } else {
-                                                        echo '<span class="text-gray-400">No companies affected</span>';
-                                                    }
-                                                ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                                <?php echo !empty($incident['date_reported']) ? date('M j, Y g:i A', strtotime($incident['date_reported'])) : 'N/A'; ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                                <?php echo !empty($incident['date_resolved']) ? date('M j, Y g:i A', strtotime($incident['date_resolved'])) : 'Not Available'; ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                                <?php 
-                                                    $statuses = !empty($incident['statuses']) ? explode(',', $incident['statuses']) : [];
-                                                    
-                                                    if (empty($statuses)) {
-                                                        echo '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">No Issues</span>';
-                                                    } else {
-                                                        // Show the most severe status only (no count)
-                                                        $statusOrder = ['pending' => 1, 'investigating' => 2, 'resolved' => 3];
-                                                        $currentStatus = '';
-                                                        $currentPriority = PHP_INT_MAX;
-                                                        
-                                                        foreach ($statuses as $status) {
-                                                            $priority = $statusOrder[$status] ?? PHP_INT_MAX;
-                                                            if ($priority < $currentPriority) {
-                                                                $currentStatus = $status;
-                                                                $currentPriority = $priority;
-                                                            }
-                                                        }
-                                                        
-                                                        $statusClass = [
-                                                            'pending' => 'bg-yellow-100 text-yellow-800',
-                                                            'resolved' => 'bg-green-100 text-green-800',
-                                                            'investigating' => 'bg-blue-100 text-blue-800'
-                                                        ][$currentStatus] ?? 'bg-gray-100 text-gray-800';
-                                                        
-                                                        echo '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ' . $statusClass . '">' . 
-                                                             ucfirst($currentStatus) . 
+                                                    // Display up to the limit or total, whichever is smaller
+                                                    $display_count = min($display_limit, $total_companies);
+                                                    for ($i = 0; $i < $display_count; $i++) {
+                                                        echo '<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">' . 
+                                                             htmlspecialchars(trim($companies[$i])) . 
                                                              '</span>';
                                                     }
-                                                ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                                                    
+                                                    // Add ellipsis if there are more companies
+                                                    if ($total_companies > $display_limit) {
+                                                        $remaining = $total_companies - $display_limit;
+                                                        echo '<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600" title="' . 
+                                                             htmlspecialchars('And ' . $remaining . ' more...') . '">
+                                                                +' . $remaining . ' more
+                                                              </span>';
+                                                    }
+                                                    
+                                                    echo '</div>';
+                                                } else {
+                                                    echo '<span class="text-sm text-gray-400 italic">No companies affected</span>';
+                                                }
+                                            ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 font-medium">
+                                                <?php echo !empty($incident['date_reported']) ? date('M j, Y', strtotime($incident['date_reported'])) : 'N/A'; ?>
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                <?php echo !empty($incident['date_reported']) ? date('g:i A', strtotime($incident['date_reported'])) : ''; ?>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php if (!empty($incident['date_resolved'])): ?>
+                                                <div class="text-sm text-gray-900 font-medium">
+                                                    <?php echo date('M j, Y', strtotime($incident['date_resolved'])); ?>
+                                                </div>
+                                                <div class="text-xs text-gray-500">
+                                                    <?php echo date('g:i A', strtotime($incident['date_resolved'])); ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-sm text-gray-400 italic">Not resolved</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <?php 
+                                                $statuses = !empty($incident['statuses']) ? explode(',', $incident['statuses']) : [];
+                                                
+                                                if (empty($statuses)) {
+                                                    echo '<span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">No Issues</span>';
+                                                } else {
+                                                    // Show the most severe status only (no count)
+                                                    $statusOrder = ['pending' => 1, 'investigating' => 2, 'resolved' => 3];
+                                                    $currentStatus = '';
+                                                    $currentPriority = PHP_INT_MAX;
+                                                    
+                                                    foreach ($statuses as $status) {
+                                                        $priority = $statusOrder[$status] ?? PHP_INT_MAX;
+                                                        if ($priority < $currentPriority) {
+                                                            $currentStatus = $status;
+                                                            $currentPriority = $priority;
+                                                        }
+                                                    }
+                                                    
+                                                    $statusClass = [
+                                                        'pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                                        'resolved' => 'bg-green-100 text-green-800 border-green-200',
+                                                        'investigating' => 'bg-blue-100 text-blue-800 border-blue-200'
+                                                    ][$currentStatus] ?? 'bg-gray-100 text-gray-800 border-gray-200';
+                                                    
+                                                    $statusIcon = [
+                                                        'pending' => 'fa-clock',
+                                                        'resolved' => 'fa-check-circle',
+                                                        'investigating' => 'fa-search'
+                                                    ][$currentStatus] ?? 'fa-question-circle';
+                                                    
+                                                    echo '<span class="px-3 py-1.5 inline-flex items-center text-xs leading-5 font-semibold rounded-full border ' . $statusClass . '">' . 
+                                                         '<i class="fas ' . $statusIcon . ' mr-1.5"></i>' .
+                                                         ucfirst($currentStatus) . 
+                                                         '</span>';
+                                                }
+                                            ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <script>
-        // Add any JavaScript functionality here if needed
-    </script>
 </body>
 </html>
-
-<?php
-// Close connection
-closeConnection();
-?>

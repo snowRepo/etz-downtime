@@ -130,9 +130,26 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incidents - ETZ Downtime</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Tailwind CSS v3.4.17 -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    
+    <!-- Alpine.js v3.x -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
         .line-clamp-3 {
             display: -webkit-box;
             -webkit-line-clamp: 3;
@@ -142,27 +159,30 @@ try {
         }
         
         .incident-card {
-            transition: all 0.3s ease;
+            transition: box-shadow 0.15s ease;
         }
+        
         .incident-card:hover {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
         }
+        
         .status-badge {
-            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+            @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border;
         }
+        
         /* Impact level badges */
         .impact-high, .impact-critical {
-            @apply bg-red-100 text-red-800;
+            @apply bg-red-50 text-red-700 border-red-200;
         }
         .impact-medium {
-            @apply bg-yellow-100 text-yellow-800;
+            @apply bg-yellow-50 text-yellow-700 border-yellow-200;
         }
         .impact-low {
-            @apply bg-green-100 text-green-800;
+            @apply bg-green-50 text-green-700 border-green-200;
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
 
