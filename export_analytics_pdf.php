@@ -1,118 +1,121 @@
 <?php
+/**
+ * Analytics PDF Export
+ * Generates comprehensive analytics report with premium fintech styling
+ */
+
 require_once 'config.php';
 require_once 'vendor/autoload.php';
+require_once 'includes/pdf_config.php';
 
 // Include TCPDF library
 require_once('vendor/tecnickcom/tcpdf/tcpdf.php');
 
-// Set error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Set default date range (last 30 days including today)
-$endDate = date('Y-m-d', strtotime('+1 day')); // Include today by going to start of next day
-$startDate = date('Y-m-d', strtotime('-30 days'));
-
-// Get filter parameters
-$companyId = !empty($_GET['company_id']) ? $_GET['company_id'] : null;
-$startDate = $_GET['start_date'] ?? $startDate;
-$endDate = $_GET['end_date'] ?? $endDate;
+// Error reporting for debugging (disable in production)
+if (APP_ENV === 'development') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
 
 try {
-    // Fetch data for charts - same as in analytics.php
-    // Get total incidents by status (grouped by service and root cause)
-    $statusQuery = "SELECT 
-                        status, 
-                        COUNT(DISTINCT CONCAT(service_id, '-', root_cause)) as count 
-                    FROM issues_reported 
-                    WHERE created_at BETWEEN ? AND ? " . 
-                    ($companyId ? "AND company_id = ? " : "") . 
-                    "GROUP BY status";
-    $stmt = $pdo->prepare($statusQuery);
+    // Get and validate filter parameters
+    $endDate = $_GET['end_date'] ?? date('Y-m-d');
+    $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
+    $companyId = $_GET['company_id'] ?? null;
+    
+    // Validate inputs
+    validateDateRange($startDate, $endDate);
+    $companyId = validateCompanyId($pdo, $companyId);
+    
+    // Prepare query parameters
     $params = [$startDate, $endDate];
-    if ($companyId) $params[] = $companyId;
+    $companyFilter = '';
+    if ($companyId) {
+        $companyFilter = "AND i.company_id = ? ";
+        $params[] = $companyId;
+    }
+    
+    // Fetch summary statistics (optimized single query)
+    $summaryQuery = "
+        SELECT 
+            COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as total_incidents,
+            SUM(CASE WHEN i.status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+            SUM(CASE WHEN i.status = 'resolved' THEN 1 ELSE 0 END) as resolved_count
+        FROM issues_reported i
+        WHERE i.created_at BETWEEN ? AND ? {$companyFilter}
+    ";
+    $stmt = $pdo->prepare($summaryQuery);
+    $stmt->execute($params);
+    $summary = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    $totalIncidents = (int)($summary['total_incidents'] ?? 0);
+    $openIncidents = (int)($summary['pending_count'] ?? 0);
+    $resolvedIncidents = (int)($summary['resolved_count'] ?? 0);
+    
+    // Fetch incidents by status
+    $statusQuery = "
+        SELECT status, COUNT(DISTINCT CONCAT(service_id, '-', root_cause)) as count 
+        FROM issues_reported 
+        WHERE created_at BETWEEN ? AND ? {$companyFilter}
+        GROUP BY status
+    ";
+    $stmt = $pdo->prepare($statusQuery);
     $stmt->execute($params);
     $incidentsByStatus = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Get incidents by company (count distinct by service and root cause)
-    $companyQuery = "SELECT 
-                        c.company_name, 
-                        COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as incident_count 
-                    FROM issues_reported i
-                    JOIN companies c ON i.company_id = c.company_id
-                    WHERE i.created_at BETWEEN ? AND ? " . 
-                    ($companyId ? "AND i.company_id = ? " : "") . 
-                    "GROUP BY i.company_id 
-                    ORDER BY incident_count DESC";
+    
+    // Fetch incidents by company (top 15 only)
+    $companyQuery = "
+        SELECT c.company_name, COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as incident_count 
+        FROM issues_reported i
+        JOIN companies c ON i.company_id = c.company_id
+        WHERE i.created_at BETWEEN ? AND ? {$companyFilter}
+        GROUP BY i.company_id 
+        ORDER BY incident_count DESC
+        LIMIT " . MAX_COMPANIES_IN_CHART . "
+    ";
     $stmt = $pdo->prepare($companyQuery);
     $stmt->execute($params);
     $incidentsByCompany = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Get monthly trend
-    $trendQuery = "SELECT 
-                    DATE_FORMAT(i.created_at, '%Y-%m') as month,
-                    COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as incident_count
-                   FROM issues_reported i
-                   WHERE i.created_at BETWEEN ? AND ? " . 
-                   ($companyId ? "AND i.company_id = ? " : "") . 
-                   "GROUP BY DATE_FORMAT(i.created_at, '%Y-%m')
-                   ORDER BY month";
+    
+    // Fetch monthly trend
+    $trendQuery = "
+        SELECT 
+            DATE_FORMAT(i.created_at, '%Y-%m') as month,
+            COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as incident_count
+        FROM issues_reported i
+        WHERE i.created_at BETWEEN ? AND ? {$companyFilter}
+        GROUP BY DATE_FORMAT(i.created_at, '%Y-%m')
+        ORDER BY month
+    ";
     $stmt = $pdo->prepare($trendQuery);
     $stmt->execute($params);
     $monthlyTrend = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Get impact level distribution
-    $impactQuery = "SELECT impact_level, COUNT(*) as count 
-                   FROM issues_reported i
-                   WHERE i.created_at BETWEEN ? AND ? " . 
-                   ($companyId ? "AND i.company_id = ? " : "") . 
-                   "GROUP BY impact_level";
+    
+    // Fetch impact level distribution
+    $impactQuery = "
+        SELECT impact_level, COUNT(*) as count 
+        FROM issues_reported i
+        WHERE i.created_at BETWEEN ? AND ? {$companyFilter}
+        GROUP BY impact_level
+    ";
     $stmt = $pdo->prepare($impactQuery);
     $stmt->execute($params);
     $impactLevels = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Calculate summary statistics
-    $totalIncidents = 0;
-    $openIncidents = 0;
-    $resolvedIncidents = 0;
     
-    foreach ($incidentsByStatus as $status) {
-        $totalIncidents += (int)$status['count'];
-        if ($status['status'] === 'pending') {
-            $openIncidents = (int)$status['count'];
-        }
-        if ($status['status'] === 'resolved') {
-            $resolvedIncidents = (int)$status['count'];
-        }
-    }
-
-    // Calculate average resolution time (in hours)
-    $resolutionQuery = "SELECT AVG(TIMESTAMPDIFF(HOUR, d.actual_start_time, COALESCE(d.actual_end_time, NOW()))) as avg_hours 
-                      FROM issues_reported i
-                      JOIN downtime_incidents d ON i.issue_id = d.issue_id
-                      WHERE d.actual_start_time IS NOT NULL
-                      AND i.created_at BETWEEN ? AND ? " . 
-                      ($companyId ? "AND i.company_id = ? " : "");
+    // Calculate average resolution time
+    $resolutionQuery = "
+        SELECT AVG(TIMESTAMPDIFF(HOUR, d.actual_start_time, COALESCE(d.actual_end_time, NOW()))) as avg_hours 
+        FROM issues_reported i
+        JOIN downtime_incidents d ON i.issue_id = d.issue_id
+        WHERE d.actual_start_time IS NOT NULL
+        AND i.created_at BETWEEN ? AND ? {$companyFilter}
+    ";
     $stmt = $pdo->prepare($resolutionQuery);
     $stmt->execute($params);
     $avgResolution = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    $avgResolutionTime = 'N/A';
-    if ($avgResolution && $avgResolution['avg_hours'] !== null) {
-        $avgHours = round($avgResolution['avg_hours'], 1);
-        $avgResolutionTime = $avgHours < 24 
-            ? $avgHours . ' hours' 
-            : round($avgHours / 24, 1) . ' days';
-    }
+    $avgResolutionTime = formatDuration($avgResolution['avg_hours'] ?? null);
 
-    // Create new PDF document
-    $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-
-    // Set document information
-    $pdf->SetCreator('eTranzact Analytics Report');
-    $pdf->SetAuthor('eTranzact');
-    
-    // Get company name for title if company is selected
+    // Get company name for title
     $companyName = 'All Companies';
     if ($companyId) {
         $companyStmt = $pdo->prepare("SELECT company_name FROM companies WHERE company_id = ?");
@@ -120,102 +123,141 @@ try {
         $companyName = $companyStmt->fetchColumn() ?: 'Unknown Company';
     }
     
-    $pdf->SetTitle('Analytics Report - ' . $companyName . ' - ' . $startDate . ' to ' . $endDate);
-    $pdf->SetSubject('Analytics Report');
-    $pdf->SetKeywords('Analytics, Report, eTranzact');
-
-    // Set default header data
-    $pdf->SetHeaderData('', 0, 'Analytics Report', 'Period: ' . $startDate . ' to ' . $endDate . '\nGenerated on: ' . date('Y-m-d H:i:s'));
-
-    // Set header and footer fonts
-    $pdf->setHeaderFont(Array('helvetica', '', 10));
+    // Create new PDF document with premium fintech styling
+    $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+    
+    // Set document information
+    $pdf->SetCreator('eTranzact Analytics System');
+    $pdf->SetAuthor('eTranzact');
+    $pdf->SetTitle("Analytics Report - $companyName - $startDate to $endDate");
+    $pdf->SetSubject('Downtime Analytics Report');
+    $pdf->SetKeywords(implode(', ', ['Analytics', 'Downtime', 'Report', $companyName, date('Y-m-d')]));
+    
+    // Set header data - professional fintech style
+    $headerText = "Period: $startDate to $endDate | Generated: " . date('M j, Y');
+    $pdf->SetHeaderData('', 0, 'eTranzact Analytics Report', $headerText);
+    
+    // Set header and footer fonts - clean and professional
+    $pdf->setHeaderFont(Array('helvetica', '', 9));
     $pdf->setFooterFont(Array('helvetica', '', 8));
-
+    
     // Set default monospaced font
-    $pdf->SetDefaultMonospacedFont('helvetica');
-
-    // Set margins
-    $pdf->SetMargins(15, 25, 15);
-    $pdf->SetHeaderMargin(10);
-    $pdf->SetFooterMargin(10);
-
+    $pdf->SetDefaultMonospacedFont('courier');
+    
+    // Set margins - professional spacing
+    $pdf->SetMargins(ETZ_PDF_MARGIN_LEFT, ETZ_PDF_MARGIN_TOP, ETZ_PDF_MARGIN_RIGHT);
+    $pdf->SetHeaderMargin(ETZ_PDF_HEADER_MARGIN);
+    $pdf->SetFooterMargin(ETZ_PDF_FOOTER_MARGIN);
+    
     // Set auto page breaks
-    $pdf->SetAutoPageBreak(TRUE, 25);
-
-    // Add a page
+    $pdf->SetAutoPageBreak(TRUE, ETZ_PDF_AUTO_PAGE_BREAK);
+    
+    // Apply fintech styling
+    applyFintechStyling($pdf);
+    
+    // Add first page
     $pdf->AddPage();
-
-    // Set font
-    $pdf->SetFont('helvetica', '', 10);
-
-    // Add title
-    $pdf->SetFont('helvetica', 'B', 16);
+    
+    // === EXECUTIVE SUMMARY PAGE ===
+    
+    // Main title - professional fintech style
+    $pdf->SetFont('helvetica', 'B', 20);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
     $pdf->Cell(0, 15, 'Analytics Report', 0, 1, 'C');
-    $pdf->SetFont('helvetica', '', 12);
-    $pdf->Cell(0, 10, 'Period: ' . $startDate . ' to ' . $endDate, 0, 1, 'C');
-    $pdf->Ln(5);
-
-    // Add summary information
-    $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'Summary', 0, 1);
-    $pdf->SetFont('helvetica', '', 10);
-
-    // Summary table
-    $pdf->SetFillColor(240, 240, 240);
-    $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->Cell(60, 7, 'Metric', 1, 0, 'C', 1);
-    $pdf->Cell(60, 7, 'Value', 1, 0, 'C', 1);
-    $pdf->Cell(60, 7, 'Details', 1, 1, 'C', 1);
-
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell(60, 7, 'Report Period', 1, 0, 'L');
-    $pdf->Cell(60, 7, $startDate . ' to ' . $endDate, 1, 0, 'C');
+    
+    // Subtitle
+    $pdf->SetFont('helvetica', '', 11);
+    $pdf->SetTextColor(75, 85, 99); // gray-600
+    $pdf->Cell(0, 8, "Period: $startDate to $endDate", 0, 1, 'C');
+    $pdf->Cell(0, 8, $companyName, 0, 1, 'C');
+    $pdf->Ln(8);
+    
+    // Summary section header
+    $pdf->SetFont('helvetica', 'B', 14);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
+    $pdf->Cell(0, 10, 'Executive Summary', 0, 1);
+    $pdf->Ln(2);
+    
+    // Summary table - premium fintech styling
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetFillColor(249, 250, 251); // gray-50
+    $pdf->SetTextColor(75, 85, 99); // gray-600
+    $pdf->SetDrawColor(229, 231, 235); // gray-200
+    
+    // Table header
+    $pdf->Cell(60, TABLE_HEADER_HEIGHT, 'METRIC', 1, 0, 'L', 1);
+    $pdf->Cell(60, TABLE_HEADER_HEIGHT, 'VALUE', 1, 0, 'C', 1);
+    $pdf->Cell(60, TABLE_HEADER_HEIGHT, 'DETAILS', 1, 1, 'C', 1);
+    
+    // Table data - clean styling
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
+    
+    // Report period
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Report Period', 1, 0, 'L');
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, "$startDate to $endDate", 1, 0, 'C');
     $diff = (new DateTime($endDate))->diff(new DateTime($startDate));
-    $pdf->Cell(60, 7, $diff->days . ' days', 1, 1, 'C');
-
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, $diff->days . ' days', 1, 1, 'C');
+    
+    // Company (if filtered)
     if ($companyId) {
-        $stmt = $pdo->prepare("SELECT company_name FROM companies WHERE company_id = ?");
-        $stmt->execute([$companyId]);
-        $companyName = $stmt->fetchColumn();
-        $pdf->Cell(60, 7, 'Company', 1, 0, 'L');
-        $pdf->Cell(60, 7, $companyName ?: 'Unknown Company', 1, 0, 'C');
-        $pdf->Cell(60, 7, count($incidentsByCompany ?? []) . ' incidents', 1, 1, 'C');
+        $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Company', 1, 0, 'L');
+        $pdf->Cell(60, TABLE_ROW_HEIGHT, truncateText($companyName, 25), 1, 0, 'C');
+        $pdf->Cell(60, TABLE_ROW_HEIGHT, count($incidentsByCompany) . ' incidents', 1, 1, 'C');
     }
-
-    $pdf->Cell(60, 7, 'Total Incidents', 1, 0, 'L');
-    $pdf->Cell(60, 7, number_format($totalIncidents), 1, 0, 'C');
-    $pdf->Cell(60, 7, 'All incidents reported', 1, 1, 'C');
-
-    $pdf->Cell(60, 7, 'Pending Incidents', 1, 0, 'L');
-    $pdf->Cell(60, 7, number_format($openIncidents), 1, 0, 'C');
-    $pdf->Cell(60, 7, 'Still open', 1, 1, 'C');
-
-    $pdf->Cell(60, 7, 'Resolved Incidents', 1, 0, 'L');
-    $pdf->Cell(60, 7, number_format($resolvedIncidents), 1, 0, 'C');
-    $pdf->Cell(60, 7, 'Successfully resolved', 1, 1, 'C');
-
-    $pdf->Cell(60, 7, 'Avg. Resolution Time', 1, 0, 'L');
-    $pdf->Cell(60, 7, $avgResolutionTime, 1, 0, 'C');
-    $pdf->Cell(60, 7, 'Average time to resolve', 1, 1, 'C');
-
+    
+    // Total incidents
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Total Incidents', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, number_format($totalIncidents), 1, 0, 'C');
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'All reported issues', 1, 1, 'C');
+    
+    // Pending incidents
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Pending Incidents', 1, 0, 'L');
+    $pdf->SetTextColor(202, 138, 4); // yellow-600
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, number_format($openIncidents), 1, 0, 'C');
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Awaiting resolution', 1, 1, 'C');
+    
+    // Resolved incidents
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Resolved Incidents', 1, 0, 'L');
+    $pdf->SetTextColor(22, 163, 74); // green-600
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, number_format($resolvedIncidents), 1, 0, 'C');
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Successfully closed', 1, 1, 'C');
+    
+    // Resolution rate
+    $resolutionRate = formatPercentage($resolvedIncidents, $totalIncidents);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Resolution Rate', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, $resolutionRate, 1, 0, 'C');
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Closed vs total', 1, 1, 'C');
+    
+    // Average resolution time
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Avg. Resolution Time', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, $avgResolutionTime, 1, 0, 'C');
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->Cell(60, TABLE_ROW_HEIGHT, 'Time to resolve', 1, 1, 'C');
+    
     $pdf->Ln(10);
 
-    // Incidents by Status Pie Chart
+    // === INCIDENTS BY STATUS (PIE CHART) ===
     $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
     $pdf->Cell(0, 10, 'Incidents by Status', 0, 1, 'L');
-    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Ln(2);
 
     // Prepare data for status pie chart
     $statusLabels = [];
     $statusData = [];
-    $statusColors = [
-        'pending' => [245, 158, 11],  // yellow
-        'resolved' => [16, 185, 129]  // green
-    ];
-
-    // Prepare status data with consistent order and colors
     $statuses = ['pending', 'resolved'];
-    $hasStatusData = false;
 
     foreach ($statuses as $status) {
         $found = false;
@@ -224,7 +266,6 @@ try {
                 $statusLabels[] = ucfirst($status);
                 $statusData[] = (int)$statusItem['count'];
                 $found = true;
-                $hasStatusData = $hasStatusData || $statusItem['count'] > 0;
                 break;
             }
         }
@@ -234,77 +275,36 @@ try {
         }
     }
 
-    // Draw pie chart for status
-    $pdf->SetDrawColor(200, 200, 200);
-    $pdf->SetLineWidth(0.2);
-
-    $chartX = 80;
-    $chartY = $pdf->GetY() + 20;
-    $radius = 40;
+    // Calculate chart position for better centering
+    $pageWidth = $pdf->getPageWidth();
+    $margins = ETZ_PDF_MARGIN_LEFT + ETZ_PDF_MARGIN_RIGHT;
+    $availableWidth = $pageWidth - $margins;
+    $radius = CHART_PIE_RADIUS;
+    
+    // Center the chart horizontally
+    $chartX = ETZ_PDF_MARGIN_LEFT + ($availableWidth / 2) - $radius - 30; // Offset for legend
+    $chartY = $pdf->GetY() + 10;
     $centerX = $chartX + $radius;
     $centerY = $chartY + $radius;
 
-    // Check if we have data for the chart
-    $hasData = array_sum($statusData) > 0;
-    if (!$hasData) {
-        // For no data, just show a gray circle with text
-        $pdf->SetFillColor(200, 200, 200);
-        $pdf->PieSector($centerX, $centerY, $radius, 0, 360, 'F', false, 0, 2);
+    $pdf->SetDrawColor(229, 231, 235); // gray-200
+    $pdf->SetLineWidth(0.1);
+    
+    drawPieChart($pdf, $statusData, $statusLabels, STATUS_COLORS, $centerX, $centerY, $radius);
 
-        // Add "No Data" text in the center
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->SetTextColor(100, 100, 100);
-        $pdf->Text($centerX - 20, $centerY - 5, 'No Data');
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->SetFont('helvetica', '', 10);
-    } else {
-        // Draw the pie chart with actual data
-        $total = array_sum($statusData);
-        $startAngle = 0;
-        $i = 0;
+    // Add legend to the right of the chart
+    $legendX = $centerX + $radius + 15;
+    $legendY = $chartY + 15;
+    addChartLegend($pdf, $statusLabels, $statusData, STATUS_COLORS, $legendX, $legendY);
 
-        foreach ($statusData as $index => $value) {
-            if ($total > 0) {
-                $angle = ($value / $total) * 360;
-                $color = $statusColors[array_keys($statusLabels)[$index]] ?? [200, 200, 200];
-                $pdf->SetFillColor($color[0], $color[1], $color[2]);
-                $pdf->PieSector($centerX, $centerY, $radius, $startAngle, $startAngle + $angle, 'F', false, 0, 2);
-                $startAngle += $angle;
-            }
-            $i++;
-        }
-    }
-
-    // Add legend for status chart
-    $legendX = $centerX + $radius + 20;
-    $legendY = $chartY + 10;
-    $boxSize = 4;
-
-    $i = 0;
-    foreach ($statusLabels as $index => $label) {
-        if ($i * 6 + $legendY > 200) {
-            $legendX += 60;
-            $i = 0;
-        }
-
-        $color = $statusColors[strtolower($label)] ?? [200, 200, 200];
-        $pdf->SetFillColor($color[0], $color[1], $color[2]);
-        $pdf->Rect($legendX, $legendY + $i * 6, $boxSize, $boxSize, 'F');
-        
-        $value = $statusData[$index] ?? 0;
-        $percentage = $total > 0 ? number_format(($value / $total) * 100, 1) : 0;
-        $pdf->Text($legendX + $boxSize + 2, $legendY + $i * 6 + $boxSize - 1, 
-                  $label . ': ' . $value . ' (' . $percentage . '%)');
-        $i++;
-    }
-
-    $pdf->Ln(100); // Add space after the chart
+    $pdf->Ln(90); // Add space after the chart
 
     // Monthly Trend Bar Chart
     $pdf->AddPage();
     $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
     $pdf->Cell(0, 10, 'Monthly Incident Trend', 0, 1, 'L');
-    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Ln(2);
 
     // Prepare data for monthly trend chart
     $monthlyLabels = [];
@@ -314,13 +314,23 @@ try {
         $monthlyData[] = (int)$month['incident_count'];
     }
 
-    // Draw bar chart for monthly trend
-    $chartX = 25;
-    $chartY = $pdf->GetY() + 5;
-    $chartWidth = 160;
-    $chartHeight = 100;
+    // Calculate chart dimensions respecting margins
+    $pageWidth = $pdf->getPageWidth();
+    $margins = ETZ_PDF_MARGIN_LEFT + ETZ_PDF_MARGIN_RIGHT;
+    $availableWidth = $pageWidth - $margins - 20; // Extra space for labels
+    
+    $chartX = ETZ_PDF_MARGIN_LEFT + 10; // Space for Y-axis labels
+    $chartY = $pdf->GetY() + 10;
+    $chartWidth = $availableWidth - 10;
+    $chartHeight = 90;
     $maxData = !empty($monthlyData) ? max($monthlyData) : 10;
-    $maxData = max($maxData, 1); // Ensure we have a minimum value
+    $maxData = max($maxData, 1);
+
+    // Set professional styling
+    $pdf->SetDrawColor(229, 231, 235); // gray-200
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetTextColor(75, 85, 99); // gray-600
+    $pdf->SetFont('helvetica', '', 8);
 
     // Draw axes
     $pdf->Line($chartX, $chartY, $chartX, $chartY + $chartHeight); // Y-axis
@@ -331,47 +341,39 @@ try {
     for ($i = 0; $i <= 5; $i++) {
         $y = $chartY + $chartHeight - ($i * $yStep);
         $pdf->Line($chartX, $y, $chartX + $chartWidth, $y, array('dash' => '1,1'));
-        $pdf->Text($chartX - 15, $y - 3, number_format(($maxData / 5) * (5 - $i), 0));
+        $pdf->Text($chartX - 8, $y - 1, number_format(($maxData / 5) * $i, 0));
     }
 
-    // Draw bars
-    $barColors = [
-        [65, 105, 225],  // Royal Blue
-        [50, 205, 50],   // Lime Green
-        [255, 165, 0],   // Orange
-        [220, 20, 60],   // Crimson
-        [147, 112, 219], // Medium Purple
-        [0, 191, 255],   // Deep Sky Blue
-        [255, 192, 203], // Pink
-        [255, 215, 0]    // Gold
-    ];
-
+    // Draw bars with fintech blue
     $barCount = count($monthlyLabels);
-    $barWidth = $chartWidth / max($barCount, 1);
-    $barWidth = min($barWidth - 4, 15); // Max width for bars
-
-    foreach ($monthlyLabels as $index => $label) {
-        $barHeight = ($monthlyData[$index] / $maxData) * $chartHeight;
-        $x = $chartX + ($index * ($chartWidth / max($barCount, 1))) + 2;
-        $y = $chartY + $chartHeight - $barHeight;
-        $width = $barWidth;
-
-        $color = $barColors[$index % count($barColors)];
-        $pdf->SetFillColor($color[0], $color[1], $color[2]);
-        $pdf->Rect($x, $y, $width, $barHeight, 'F');
-
-        // Add month label (rotated)
-        $pdf->StartTransform();
-        $pdf->Rotate(45, $x + $width/2, $chartY + $chartHeight + 5);
-        $pdf->Text($x, $chartY + $chartHeight + 5, $label);
-        $pdf->StopTransform();
+    if ($barCount > 0) {
+        $barWidth = min(($chartWidth / $barCount) - 4, CHART_BAR_MAX_WIDTH);
+        
+        foreach ($monthlyLabels as $index => $label) {
+            $barHeight = ($monthlyData[$index] / $maxData) * $chartHeight;
+            $x = $chartX + ($index * ($chartWidth / $barCount)) + 2;
+            $y = $chartY + $chartHeight - $barHeight;
+            
+            // Use fintech blue
+            $pdf->SetFillColor(37, 99, 235); // blue-600
+            $pdf->Rect($x, $y, $barWidth, $barHeight, 'F');
+            
+            // Add month label (rotated)
+            $pdf->StartTransform();
+            $pdf->Rotate(45, $x + $barWidth/2, $chartY + $chartHeight + 3);
+            $pdf->Text($x, $chartY + $chartHeight + 3, $label);
+            $pdf->StopTransform();
+        }
     }
+    
+    $pdf->Ln(10);
 
     // Incidents by Company Bar Chart
     $pdf->AddPage();
     $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
     $pdf->Cell(0, 10, 'Incidents by Company', 0, 1, 'L');
-    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Ln(2);
 
     // Prepare data for company chart
     $companyLabels = [];
@@ -381,13 +383,23 @@ try {
         $companyData[] = (int)$company['incident_count'];
     }
 
-    // Draw horizontal bar chart for companies
-    $chartX = 25;
-    $chartY = $pdf->GetY() + 5;
-    $chartWidth = 100;
-    $chartHeight = max(60, count($companyLabels) * 10); // Adjust height based on number of companies
+    // Calculate chart dimensions respecting margins
+    $pageWidth = $pdf->getPageWidth();
+    $margins = ETZ_PDF_MARGIN_LEFT + ETZ_PDF_MARGIN_RIGHT;
+    $availableWidth = $pageWidth - $margins - 60; // Space for company names
+    
+    $chartX = ETZ_PDF_MARGIN_LEFT;
+    $chartY = $pdf->GetY() + 10;
+    $chartWidth = $availableWidth - 10;
+    $chartHeight = max(60, count($companyLabels) * 10);
     $maxData = !empty($companyData) ? max($companyData) : 10;
-    $maxData = max($maxData, 1); // Ensure we have a minimum value
+    $maxData = max($maxData, 1);
+
+    // Set professional styling
+    $pdf->SetDrawColor(229, 231, 235); // gray-200
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetTextColor(75, 85, 99); // gray-600
+    $pdf->SetFont('helvetica', '', 8);
 
     // Draw axes
     $pdf->Line($chartX, $chartY, $chartX, $chartY + $chartHeight); // Y-axis
@@ -398,125 +410,74 @@ try {
     for ($i = 0; $i <= 5; $i++) {
         $x = $chartX + ($i * $xStep);
         $pdf->Line($x, $chartY, $x, $chartY + $chartHeight, array('dash' => '1,1'));
-        $pdf->Text($x - 5, $chartY + $chartHeight + 5, number_format(($maxData / 5) * $i, 0));
+        $pdf->Text($x - 3, $chartY + $chartHeight + 4, number_format(($maxData / 5) * $i, 0));
     }
 
     // Draw horizontal bars
-    $barColors = [
-        [65, 105, 225],  // Royal Blue
-        [50, 205, 50],   // Lime Green
-        [255, 165, 0],   // Orange
-        [220, 20, 60],   // Crimson
-        [147, 112, 219], // Medium Purple
-        [0, 191, 255],   // Deep Sky Blue
-        [255, 192, 203], // Pink
-        [255, 215, 0]    // Gold
-    ];
-
-    $barHeight = count($companyLabels) > 0 ? ($chartHeight - 10) / count($companyLabels) : 10;
-    $barHeight = max(5, min($barHeight, 15)); // Ensure bars are visible but not too large
-
-    foreach ($companyLabels as $index => $label) {
-        $barWidth = ($companyData[$index] / $maxData) * $chartWidth;
-        $x = $chartX;
-        $y = $chartY + 5 + ($index * ($chartHeight - 10) / max(count($companyLabels), 1));
+    $barCount = count($companyLabels);
+    if ($barCount > 0) {
+        $barHeight = min(($chartHeight - 10) / $barCount, CHART_HORIZONTAL_BAR_HEIGHT);
         
-        $color = $barColors[$index % count($barColors)];
-        $pdf->SetFillColor($color[0], $color[1], $color[2]);
-        $pdf->Rect($x, $y, $barWidth, $barHeight, 'F');
-        
-        // Add company label
-        $pdf->Text($chartX + $chartWidth + 5, $y + $barHeight/2 + 2, substr($label, 0, 30));
-        
-        // Add value label
-        $pdf->Text($x + $barWidth + 2, $y + $barHeight/2 + 2, $companyData[$index]);
+        foreach ($companyLabels as $index => $label) {
+            $barWidth = ($companyData[$index] / $maxData) * $chartWidth;
+            $x = $chartX;
+            $y = $chartY + 5 + ($index * ($chartHeight - 10) / $barCount);
+            
+            // Use fintech blue
+            $pdf->SetFillColor(37, 99, 235); // blue-600
+            $pdf->Rect($x, $y, $barWidth, $barHeight, 'F');
+            
+            // Add company label (truncated to fit)
+            $pdf->SetTextColor(17, 24, 39); // gray-900
+            $pdf->Text($chartX + $chartWidth + 3, $y + $barHeight/2 + 1, truncateText($label, 25));
+            
+            // Add value label
+            $pdf->SetTextColor(75, 85, 99); // gray-600
+            $pdf->Text($x + $barWidth + 2, $y + $barHeight/2 + 1, $companyData[$index]);
+        }
     }
+    
+    $pdf->Ln(10);
 
     // Impact Level Distribution Pie Chart
     $pdf->AddPage();
     $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
     $pdf->Cell(0, 10, 'Impact Level Distribution', 0, 1, 'L');
-    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Ln(2);
 
     // Prepare data for impact level chart
     $impactLabels = [];
     $impactData = [];
-    $impactColors = [
-        'Critical' => [220, 38, 38],    // Dark Red
-        'High' => [239, 68, 68],        // Red
-        'Medium' => [245, 158, 11],     // Amber
-        'Low' => [16, 185, 129]         // Green
-    ];
 
     foreach ($impactLevels as $impact) {
         $impactLabels[] = $impact['impact_level'];
         $impactData[] = (int)$impact['count'];
     }
 
-    // Draw pie chart for impact levels
-    $pdf->SetDrawColor(200, 200, 200);
-    $pdf->SetLineWidth(0.2);
-
-    $chartX = 80;
-    $chartY = $pdf->GetY() + 20;
-    $radius = 40;
+    // Calculate chart position for better centering
+    $pageWidth = $pdf->getPageWidth();
+    $margins = ETZ_PDF_MARGIN_LEFT + ETZ_PDF_MARGIN_RIGHT;
+    $availableWidth = $pageWidth - $margins;
+    $radius = CHART_PIE_RADIUS;
+    
+    // Center the chart horizontally
+    $chartX = ETZ_PDF_MARGIN_LEFT + ($availableWidth / 2) - $radius - 30;
+    $chartY = $pdf->GetY() + 10;
     $centerX = $chartX + $radius;
     $centerY = $chartY + $radius;
 
-    // Check if we have data for the chart
-    $hasImpactData = array_sum($impactData) > 0;
-    if (!$hasImpactData) {
-        // For no data, just show a gray circle with text
-        $pdf->SetFillColor(200, 200, 200);
-        $pdf->PieSector($centerX, $centerY, $radius, 0, 360, 'F', false, 0, 2);
+    $pdf->SetDrawColor(229, 231, 235); // gray-200
+    $pdf->SetLineWidth(0.1);
+    
+    drawPieChart($pdf, $impactData, $impactLabels, IMPACT_COLORS, $centerX, $centerY, $radius);
 
-        // Add "No Data" text in the center
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->SetTextColor(100, 100, 100);
-        $pdf->Text($centerX - 20, $centerY - 5, 'No Data');
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->SetFont('helvetica', '', 10);
-    } else {
-        // Draw the pie chart with actual data
-        $total = array_sum($impactData);
-        $startAngle = 0;
-        $i = 0;
+    // Add legend to the right of the chart
+    $legendX = $centerX + $radius + 15;
+    $legendY = $chartY + 15;
+    addChartLegend($pdf, $impactLabels, $impactData, IMPACT_COLORS, $legendX, $legendY);
 
-        foreach ($impactData as $index => $value) {
-            if ($total > 0) {
-                $angle = ($value / $total) * 360;
-                $label = $impactLabels[$index];
-                $color = $impactColors[$label] ?? [200, 200, 200];
-                $pdf->SetFillColor($color[0], $color[1], $color[2]);
-                $pdf->PieSector($centerX, $centerY, $radius, $startAngle, $startAngle + $angle, 'F', false, 0, 2);
-                $startAngle += $angle;
-            }
-            $i++;
-        }
-    }
-
-    // Add legend for impact level chart
-    $legendX = $centerX + $radius + 20;
-    $legendY = $chartY + 10;
-    $boxSize = 4;
-
-    $i = 0;
-    foreach ($impactLabels as $index => $label) {
-        if ($i * 6 + $legendY > 200) {
-            $legendX += 60;
-            $i = 0;
-        }
-
-        $color = $impactColors[$label] ?? [200, 200, 200];
-        $pdf->SetFillColor($color[0], $color[1], $color[2]);
-        $pdf->Rect($legendX, $legendY + $i * 6, $boxSize, $boxSize, 'F');
-        
-        $value = $impactData[$index] ?? 0;
-        $percentage = $total > 0 ? number_format(($value / $total) * 100, 1) : 0;
-        $pdf->Text($legendX + $boxSize + 2, $legendY + $i * 6 + $boxSize - 1, 
-                  $label . ': ' . $value . ' (' . $percentage . '%)');
-        $i++;
-    }
+    $pdf->Ln(90);
 
     // Detailed Incidents Table
     $pdf->AddPage();
@@ -627,6 +588,36 @@ try {
     $pdf->Output($filename, 'D');
     exit;
 
+} catch (InvalidArgumentException $e) {
+    // Handle validation errors
+    http_response_code(400);
+    error_log('PDF Export Validation Error: ' . $e->getMessage());
+    
+    if (APP_ENV === 'development') {
+        die('Validation Error: ' . $e->getMessage());
+    } else {
+        die('Invalid request parameters. Please check your date range and company selection.');
+    }
+    
+} catch (PDOException $e) {
+    // Handle database errors
+    http_response_code(500);
+    error_log('PDF Export Database Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
+    
+    if (APP_ENV === 'development') {
+        die('Database Error: ' . $e->getMessage());
+    } else {
+        die('Unable to retrieve analytics data. Please try again later.');
+    }
+    
 } catch (Exception $e) {
-    die('Error generating PDF: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
+    // Handle all other errors
+    http_response_code(500);
+    error_log('PDF Export Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
+    
+    if (APP_ENV === 'development') {
+        die('Error generating PDF: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
+    } else {
+        die('Unable to generate report. Please try again later.');
+    }
 }
