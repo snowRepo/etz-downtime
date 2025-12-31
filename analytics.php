@@ -146,11 +146,35 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics - eTranzact Downtime Tracker</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Analytics - eTranzact</title>
+    
+    <!-- Tailwind CSS v3.4.17 -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    
+    <!-- Alpine.js v3.x -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
         .chart-container {
             position: relative;
             height: 350px;
@@ -164,14 +188,18 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 dark:bg-gray-900">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
     
-    <div class="container mx-auto px-4 py-8">
+    <main class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header with title and export button -->
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-bold text-gray-800">Analytics</h1>
+        <div class="md:flex md:items-center md:justify-between mb-6">
+            <div class="flex-1 min-w-0">
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Analytics</h2>
+            </div>
+            <div class="mt-4 flex md:mt-0 md:ml-6">
             
             <!-- PDF Export Button -->
             <a href="export_analytics_pdf.php?company_id=<?= $companyId ? htmlspecialchars($companyId) : '' ?>&start_date=<?= htmlspecialchars($startDate) ?>&end_date=<?= htmlspecialchars($endDate) ?>" 
@@ -181,10 +209,11 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                 </svg>
                 Export PDF
             </a>
+            </div>
         </div>
         
         <!-- Date Range Picker and Filters -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-8">
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
             <form method="GET" class="flex flex-wrap items-end gap-4">
                 <div class="flex items-center space-x-2">
                     <label class="text-sm font-medium text-gray-700">Company:</label>
@@ -282,7 +311,7 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
             }
             ?>
             
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
                 <div class="flex items-center">
                     <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mr-4">
                         <i class="fas fa-exclamation-triangle text-blue-600 text-2xl"></i>
@@ -294,7 +323,7 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                 </div>
             </div>
             
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
                 <div class="flex items-center">
                     <div class="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 mr-4">
                         <i class="fas fa-clock text-yellow-600 text-2xl"></i>
@@ -306,7 +335,7 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                 </div>
             </div>
             
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
                 <div class="flex items-center">
                     <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mr-4">
                         <i class="fas fa-check-circle text-green-600 text-2xl"></i>
@@ -318,7 +347,7 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                 </div>
             </div>
             
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
                 <div class="flex items-center">
                     <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mr-4">
                         <i class="fas fa-stopwatch text-purple-600 text-2xl"></i>
@@ -334,16 +363,16 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
         <!-- Charts Row 1 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Incidents by Status -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Incidents by Status</h3>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Incidents by Status</h3>
                 <div class="chart-container">
                     <canvas id="statusChart"></canvas>
                 </div>
             </div>
             
             <!-- Monthly Trend -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Monthly Incident Trend</h3>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Monthly Incident Trend</h3>
                 <div class="chart-container">
                     <canvas id="trendChart"></canvas>
                 </div>
@@ -353,16 +382,16 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
         <!-- Charts Row 2 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Incidents by Company -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Incidents by Company</h3>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Incidents by Company</h3>
                 <div class="chart-container">
                     <canvas id="companyChart"></canvas>
                 </div>
             </div>
             
             <!-- Impact Level Distribution -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Impact Level Distribution</h3>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Impact Level Distribution</h3>
                 <div class="chart-container">
                     <canvas id="impactChart"></canvas>
                 </div>
@@ -606,6 +635,9 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
             }
         });
     </script>
+
+    </div>
+    </main>
 
 </body>
 </html>

@@ -133,6 +133,11 @@ try {
     
     <!-- Tailwind CSS v3.4.17 -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     
     <!-- Alpine.js v3.x -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -182,7 +187,7 @@ try {
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 dark:bg-gray-900">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
 
@@ -206,7 +211,7 @@ try {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="md:flex md:items-center md:justify-between mb-6">
                 <div class="flex-1 min-w-0">
-                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
                         All Incidents
                     </h2>
                 </div>
@@ -242,6 +247,15 @@ try {
 
             <!-- Incidents List -->
             <div class="space-y-4">
+                <!-- Empty State for No Results -->
+                <div id="no-results" class="hidden text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No incidents found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Try selecting a different filter.</p>
+                </div>
+                
                 <?php if (empty($incidents)): ?>
                     <div class="text-center py-12">
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,17 +267,28 @@ try {
                 <?php else: ?>
                     <?php foreach ($incidents as $incident): 
                         $statusClass = $incident['status'] === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
-                        $impactClass = 'impact-' . strtolower($incident['impact_level']);
+                        
+                        // Impact level colors
+                        $impactColors = [
+                            'critical' => 'bg-red-100 text-red-800',
+                            'high' => 'bg-orange-100 text-orange-800',
+                            'medium' => 'bg-yellow-100 text-yellow-800',
+                            'low' => 'bg-blue-100 text-blue-800'
+                        ];
+                        $impactClass = $impactColors[strtolower($incident['impact_level'])] ?? 'bg-gray-100 text-gray-800';
                     ?>
-                        <div class="incident-card bg-white shadow overflow-hidden sm:rounded-lg mb-6" data-status="<?php echo $incident['status']; ?>">
+                        <div class="incident-card bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mb-6 border dark:border-gray-700" data-status="<?php echo $incident['status']; ?>">
                             <div class="px-4 py-5 sm:px-6">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                                     <div class="flex-1">
-                                        <div class="flex items-center">
+                                        <div class="flex items-center gap-2 flex-wrap">
                                             <h3 class="text-lg font-medium text-gray-900">
                                                 <?php echo htmlspecialchars($incident['service_name']); ?>
                                             </h3>
-                                            <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $statusClass; ?>">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $impactClass; ?>">
+                                                <?php echo ucfirst($incident['impact_level']); ?>
+                                            </span>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $statusClass; ?>">
                                                 <?php echo ucfirst($incident['status']); ?>
                                             </span>
                                         </div>
@@ -286,93 +311,66 @@ try {
                                 </div>
                             </div>
                             <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
-                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                    <div class="sm:col-span-1 text-center">
-                                        <h4 class="text-sm font-medium text-gray-500">Impact Level</h4>
-                                        <div class="flex justify-center">
-                                            <span class="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $impactClass; ?>">
-                                                <?php echo $incident['impact_level']; ?> Impact
-                                            </span>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- LEFT COLUMN: Details -->
+                                    <div class="space-y-4">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Affected Companies</h4>
+                                            <p class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($incident['affected_companies']); ?></p>
                                         </div>
-                                    </div>
-                                    <div class="sm:col-span-1 text-center">
-                                        <h4 class="text-sm font-medium text-gray-500">Affected Companies (<?php echo $incident['company_count']; ?>)</h4>
-                                        <p class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($incident['affected_companies']); ?></p>
-                                    </div>
-                                    <div class="sm:col-span-1 text-center">
-                                        <h4 class="text-sm font-medium text-gray-500">Root Cause</h4>
-                                        <div class="mt-1 px-2">
+                                        
+                                        <div>
+                                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Root Cause</h4>
                                             <?php if (!empty($incident['root_cause'])): ?>
-                                                <div class="relative">
-                                                    <p id="root-cause-<?php echo $incident['issue_id']; ?>" class="text-sm text-gray-900 line-clamp-3">
-                                                        <?php echo htmlspecialchars($incident['root_cause']); ?>
-                                                    </p>
-                                                    <?php if (strlen($incident['root_cause']) > 100): ?>
-                                                        <button type="button" 
-                                                                onclick="toggleRootCause(<?php echo $incident['issue_id']; ?>)" 
-                                                                class="mt-1 text-xs text-blue-600 hover:text-blue-800 focus:outline-none">
-                                                            <span class="read-more">Read more</span>
-                                                            <span class="read-less hidden">Show less</span>
-                                                        </button>
-                                                    <?php endif; ?>
-                                                </div>
+                                                <p class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($incident['root_cause']); ?></p>
                                             <?php else: ?>
-                                                <p class="text-sm text-gray-500 italic">Not specified</p>
+                                                <p class="mt-1 text-sm text-gray-500 italic">Not specified</p>
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                </div>
-                                
-                                <!-- Updates Section -->
-                                <div class="mt-6">
-                                    <h4 class="text-sm font-medium text-gray-500 mb-3">Updates (<?php echo $incident['update_count']; ?>)</h4>
-                                    <?php if (empty($incident['updates'])): ?>
-                                        <p class="text-sm text-gray-500 italic">No updates yet.</p>
-                                    <?php else: ?>
-                                        <div class="space-y-4">
-                                            <?php foreach ($incident['updates'] as $update): ?>
-                                                <div class="flex">
-                                                    <div class="flex-shrink-0 mr-3">
-                                                        <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                                            <span class="text-gray-500 text-sm font-medium">
-                                                                <?php echo strtoupper(substr($update['user_name'], 0, 2)); ?>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex-1 bg-gray-50 rounded-lg px-4 py-2">
-                                                        <div class="flex items-center justify-between">
-                                                            <span class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($update['user_name']); ?></span>
-                                                            <span class="text-xs text-gray-500"><?php echo date('M j, g:i A', strtotime($update['created_at'])); ?></span>
-                                                        </div>
-                                                        <p class="mt-1 text-sm text-gray-700"><?php echo nl2br(htmlspecialchars($update['update_text'])); ?></p>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
                                     
-                                    <!-- Add Update Form -->
-                                    <form method="POST" class="mt-4">
-                                        <input type="hidden" name="action" value="add_update">
-                                        <input type="hidden" name="issue_id" value="<?php echo $incident['issue_id']; ?>">
-                                        <div class="mt-1">
-                                            <label for="user_name_<?php echo $incident['issue_id']; ?>" class="block text-sm font-medium text-gray-700">Your Name</label>
-                                            <input type="text" name="user_name" id="user_name_<?php echo $incident['issue_id']; ?>" 
-                                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                                   required>
-                                        </div>
-                                        <div class="mt-2">
-                                            <label for="update_text_<?php echo $incident['issue_id']; ?>" class="block text-sm font-medium text-gray-700">Add Update</label>
-                                            <textarea id="update_text_<?php echo $incident['issue_id']; ?>" name="update_text" rows="2" 
-                                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                                      placeholder="Add an update about this issue..." required></textarea>
-                                        </div>
-                                        <div class="mt-2 flex justify-end">
-                                            <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                                <i class="fas fa-paper-plane mr-1"></i> Post Update
-                                            </button>
-                                        </div>
-                                    </form>
+                                    <!-- RIGHT COLUMN: Updates -->
+                                    <div class="lg:border-l lg:border-gray-200 lg:pl-6">
+                                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Updates (<?php echo $incident['update_count']; ?>)</h4>
+                                        
+                                        <?php if (empty($incident['updates'])): ?>
+                                            <p class="text-sm text-gray-500 italic">No updates available.</p>
+                                        <?php else: ?>
+                                            <div class="space-y-3 mb-4">
+                                                <?php foreach ($incident['updates'] as $update): ?>
+                                                    <div class="text-sm">
+                                                        <div class="flex items-baseline gap-2">
+                                                            <span class="font-medium text-gray-900"><?php echo htmlspecialchars($update['user_name']); ?></span>
+                                                            <span class="text-xs text-gray-500">• <?php echo date('M j, g:i A', strtotime($update['created_at'])); ?></span>
+                                                        </div>
+                                                        <p class="mt-0.5 text-gray-700"><?php echo nl2br(htmlspecialchars($update['update_text'])); ?></p>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Add Update Form - Inline -->
+                                        <form method="POST" class="mt-3">
+                                            <input type="hidden" name="action" value="add_update">
+                                            <input type="hidden" name="issue_id" value="<?php echo $incident['issue_id']; ?>">
+                                            <div class="flex gap-2">
+                                                <input type="text" 
+                                                       name="user_name" 
+                                                       placeholder="Your Name" 
+                                                       required
+                                                       class="w-32 text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1.5 px-3">
+                                                <input type="text" 
+                                                       name="update_text" 
+                                                       placeholder="Add an update..." 
+                                                       required
+                                                       class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1.5 px-3">
+                                                <button type="submit" 
+                                                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                                    Post
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -466,14 +464,25 @@ try {
                 
                 // Filter incidents
                 const incidents = document.querySelectorAll('.incident-card');
+                const noResults = document.getElementById('no-results');
+                let visibleCount = 0;
+                
                 incidents.forEach(incident => {
                     const incidentStatus = incident.getAttribute('data-status');
                     if (status === 'all' || incidentStatus === status) {
                         incident.classList.remove('hidden');
+                        visibleCount++;
                     } else {
                         incident.classList.add('hidden');
                     }
                 });
+                
+                // Show/hide empty state
+                if (visibleCount === 0) {
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                }
                 
                 // Update URL without page reload
                 const url = new URL(window.location);

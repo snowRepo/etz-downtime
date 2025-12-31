@@ -52,20 +52,22 @@ try {
                 ir.created_at as incident_date,
                 ir.resolved_at as resolved_date,
                 TIMESTAMPDIFF(MINUTE, 
-                    GREATEST(ir.created_at, :period_start), 
-                    LEAST(IFNULL(ir.resolved_at, NOW()), :period_end)
+                    GREATEST(ir.created_at, :start1), 
+                    LEAST(IFNULL(ir.resolved_at, NOW()), :end1)
                 ) as downtime_minutes,
                 ir.impact_level,
                 ir.root_cause
               FROM issues_reported ir
               JOIN companies c ON ir.company_id = c.company_id
               JOIN services s ON ir.service_id = s.service_id
-              WHERE ir.created_at < :period_end 
-              AND (ir.resolved_at IS NULL OR ir.resolved_at > :period_start)";
+              WHERE ir.created_at < :end2 
+              AND (ir.resolved_at IS NULL OR ir.resolved_at > :start2)";
     
     $params = [
-        'period_start' => $startDate . ' 00:00:00',
-        'period_end' => $endDate . ' 23:59:59'
+        'start1' => $startDate . ' 00:00:00',
+        'end1' => $endDate . ' 23:59:59',
+        'start2' => $startDate . ' 00:00:00',
+        'end2' => $endDate . ' 23:59:59'
     ];
     
     if ($companyId) {

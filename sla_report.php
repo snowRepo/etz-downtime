@@ -124,12 +124,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SLA Report - eTranzact</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS v3.4.17 -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    
+    <!-- Alpine.js v3.x -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="//unpkg.com/alpinejs" defer></script>
+    
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 dark:bg-gray-900">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
 
@@ -139,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
             <!-- Page Header -->
             <div class="md:flex md:items-center md:justify-between mb-6">
                 <div class="flex-1 min-w-0">
-                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">SLA Uptime Report</h2>
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">SLA Uptime Report</h2>
                 </div>
                 <div class="mt-4 flex md:mt-0 md:ml-4">
                     <!-- Export Dropdown -->
@@ -216,9 +240,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
             </div>
 
             <!-- Filter Form -->
-            <div class="bg-white shadow overflow-visible sm:rounded-lg mb-6" style="position: relative; z-index: 1;">
-                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+            <div class="bg-white dark:bg-gray-800 shadow overflow-visible sm:rounded-lg mb-6 border dark:border-gray-700" style="position: relative; z-index: 1;">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                         Report Filters
                     </h3>
                 </div>
@@ -398,9 +422,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                 </div>
 
                 <!-- Downtime by Service -->
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mb-6 border dark:border-gray-700">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                             Downtime by Service
                         </h3>
                         <p class="mt-1 max-w-2xl text-sm text-gray-500">
@@ -448,9 +472,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                 </div>
 
                 <!-- Recent Incidents -->
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg border dark:border-gray-700">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                             Recent Incidents
                         </h3>
                         <p class="mt-1 max-w-2xl text-sm text-gray-500">
