@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                     <form method="get" class="space-y-4">
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div>
-                                <label for="company_id" class="block text-sm font-medium text-gray-700">Company</label>
+                                <label for="company_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Company</label>
                                 <div class="mt-1 relative">
                                     <button type="button" id="company-dropdown-button" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                         <span id="company-selected-text" class="block truncate">
@@ -315,13 +315,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                 </script>
                             </div>
                             <div>
-                                <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                                <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
                                 <input type="date" id="start_date" name="start_date" 
                                     value="<?= htmlspecialchars($startDate) ?>"
                                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                             </div>
                             <div>
-                                <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
+                                <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
                                 <input type="date" id="end_date" name="end_date" 
                                     value="<?= htmlspecialchars($endDate) ?>"
                                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
@@ -329,7 +329,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                             <div class="flex items-end space-x-3">
                                 <button type="button" 
                                     onclick="window.location.href='sla_report.php'"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                     Clear
                                 </button>
                                 <button type="submit" 
@@ -354,11 +354,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                 </div>
                                 <div class="ml-5 w-0 flex-1">
                                     <dl>
-                                        <dt class="text-sm font-medium text-gray-500 truncate">
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                                             SLA Target
                                         </dt>
                                         <dd class="flex items-baseline">
-                                            <div class="text-2xl font-semibold text-gray-900">
+                                            <div class="text-2xl font-semibold text-gray-900 dark:text-white">
                                                 <?= number_format($reportData['slaTarget'], 2) ?>%
                                             </div>
                                         </dd>
@@ -377,14 +377,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                 </div>
                                 <div class="ml-5 w-0 flex-1">
                                     <dl>
-                                        <dt class="text-sm font-medium text-gray-500 truncate">
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                                             Total Downtime
                                         </dt>
                                         <dd class="flex items-baseline">
-                                            <div class="text-2xl font-semibold text-gray-900">
+                                            <div class="text-2xl font-semibold text-gray-900 dark:text-white">
                                                 <?= number_format($reportData['totalDowntime'], 2) ?> minutes
                                             </div>
-                                            <div class="ml-2 flex items-baseline text-sm font-semibold text-gray-500">
+                                            <div class="ml-2 flex items-baseline text-sm font-semibold text-gray-500 dark:text-gray-400">
                                                 (<?= number_format(($reportData['totalDowntime'] / 60), 2) ?> hours)
                                             </div>
                                         </dd>
@@ -403,11 +403,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                 </div>
                                 <div class="ml-5 w-0 flex-1">
                                     <dl>
-                                        <dt class="text-sm font-medium text-gray-500 truncate">
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                                             Actual Uptime
                                         </dt>
                                         <dd class="flex items-baseline">
-                                            <div class="text-2xl font-semibold text-gray-900">
+                                            <div class="text-2xl font-semibold text-gray-900 dark:text-white">
                                                 <?= number_format($reportData['uptimePercentage'], 2) ?>%
                                             </div>
                                             <div class="ml-2 flex items-baseline text-sm font-semibold <?= $reportData['isMetSla'] ? 'text-green-600' : 'text-red-600' ?>">
@@ -427,7 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                             Downtime by Service
                         </h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
                             Breakdown of downtime incidents by service
                         </p>
                     </div>
@@ -441,26 +441,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                     <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">% of Total</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <?php if (empty($reportData['downtimeByService'])): ?>
                                     <tr>
-                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No downtime data available</td>
+                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No downtime data available</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($reportData['downtimeByService'] as $service): ?>
                                         <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-center">
                                                 <?= htmlspecialchars($service['name']) ?>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                                     <?= $service['incidents'] ?>
                                                 </span>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
                                                 <?= number_format($service['downtime']) ?> mins
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
                                                 <?= $reportData['totalDowntime'] > 0 ? number_format(($service['downtime'] / $reportData['totalDowntime']) * 100, 2) : '0' ?>%
                                             </td>
                                         </tr>
@@ -477,7 +477,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                             Recent Incidents
                         </h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
                             List of all downtime incidents for the selected period
                         </p>
                     </div>
@@ -493,10 +493,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                     <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Impact</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <?php if (empty($reportData['incidents'])): ?>
                                     <tr>
-                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No incidents found for the selected period</td>
+                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No incidents found for the selected period</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($reportData['incidents'] as $incident): 
@@ -508,15 +508,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                         ][$incident['impact_level'] ?? 'Low'] ?? 'bg-gray-100 text-gray-800';
                                     ?>
                                         <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-center">
                                                 <?= htmlspecialchars($incident['service_name']) ?>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">
                                                 <?= !empty($incident['actual_start_time']) && $incident['actual_start_time'] != '0000-00-00 00:00:00' 
                                                     ? date('M j, Y H:i', strtotime($incident['actual_start_time'])) 
                                                     : 'N/A' ?>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">
                                                 <?php 
                                                 if (empty($incident['actual_end_time']) || $incident['actual_end_time'] == '0000-00-00 00:00:00') {
                                                     if (($incident['status'] ?? '') === 'resolved') {
@@ -532,10 +532,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                                 }
                                                 ?>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
                                                 <?= $incident['downtime_minutes'] ?? 'N/A' ?> mins
                                             </td>
-                                            <td class="px-6 py-4 text-sm text-gray-500 text-center">
+                                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
                                                 <?= htmlspecialchars($incident['root_cause']) ?>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-center">

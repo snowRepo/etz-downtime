@@ -235,8 +235,8 @@ try {
                                     <td colspan="5" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center justify-center">
                                             <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
-                                            <p class="text-sm font-medium text-gray-500">No incidents found</p>
-                                            <p class="text-xs text-gray-400 mt-1">All systems operational</p>
+                                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">No incidents found</p>
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">All systems operational</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -261,7 +261,7 @@ try {
                                                     </svg>
                                                 </div>
                                                 <div class="ml-3">
-                                                    <div class="text-sm font-medium text-gray-900">
+                                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
                                                         <?php echo htmlspecialchars($incident['service_name']); ?>
                                                     </div>
                                                 </div>
@@ -300,23 +300,23 @@ try {
                                             ?>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900 font-medium">
+                                            <div class="text-sm text-gray-900 dark:text-white font-medium">
                                                 <?php echo !empty($incident['date_reported']) ? date('M j, Y', strtotime($incident['date_reported'])) : 'N/A'; ?>
                                             </div>
-                                            <div class="text-xs text-gray-500">
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                                 <?php echo !empty($incident['date_reported']) ? date('g:i A', strtotime($incident['date_reported'])) : ''; ?>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <?php if (!empty($incident['date_resolved'])): ?>
-                                                <div class="text-sm text-gray-900 font-medium">
+                                                <div class="text-sm text-gray-900 dark:text-white font-medium">
                                                     <?php echo date('M j, Y', strtotime($incident['date_resolved'])); ?>
                                                 </div>
-                                                <div class="text-xs text-gray-500">
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">
                                                     <?php echo date('g:i A', strtotime($incident['date_resolved'])); ?>
                                                 </div>
                                             <?php else: ?>
-                                                <span class="text-sm text-gray-400 italic">Not resolved</span>
+                                                <span class="text-sm text-gray-400 dark:text-gray-500 italic">Not resolved</span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">

@@ -216,9 +216,9 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
         <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
             <form method="GET" class="flex flex-wrap items-end gap-4">
                 <div class="flex items-center space-x-2">
-                    <label class="text-sm font-medium text-gray-700">Company:</label>
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Company:</label>
                     <div class="relative">
-                        <button type="button" id="company-dropdown-button" class="relative w-48 bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-1.5 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <button type="button" id="company-dropdown-button" class="relative w-48 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm pl-3 pr-10 py-1.5 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-900 dark:text-white">
                             <span id="company-selected-text" class="block truncate">
                                 <?php 
                                 $selectedCompanyName = 'All Companies';
@@ -239,15 +239,15 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                                 </svg>
                             </span>
                         </button>
-                        <div id="company-dropdown" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-sm ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none">
-                            <div class="flex items-center px-4 py-2 hover:bg-gray-100">
+                        <div id="company-dropdown" class="hidden absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg max-h-60 rounded-md py-1 text-sm ring-1 ring-black ring-opacity-5 dark:ring-gray-600 overflow-auto focus:outline-none">
+                            <div class="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 <input type="radio" id="company-all" name="company_id" value="" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" <?= empty($companyId) ? 'checked' : '' ?>>
-                                <label for="company-all" class="ml-3 block text-sm font-medium text-gray-700">All Companies</label>
+                                <label for="company-all" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">All Companies</label>
                             </div>
                             <?php foreach ($companies as $company): ?>
-                                <div class="flex items-center px-4 py-2 hover:bg-gray-100">
+                                <div class="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">
                                     <input type="radio" id="company-<?= $company['company_id'] ?>" name="company_id" value="<?= $company['company_id'] ?>" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" <?= $companyId == $company['company_id'] ? 'checked' : '' ?>>
-                                    <label for="company-<?= $company['company_id'] ?>" class="ml-3 block text-sm font-medium text-gray-700">
+                                    <label for="company-<?= $company['company_id'] ?>" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         <?= htmlspecialchars($company['company_name']) ?>
                                     </label>
                                 </div>
@@ -257,18 +257,18 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <label class="text-sm font-medium text-gray-700">From:</label>
-                    <input type="date" name="start_date" value="<?= $startDate ?>" class="border rounded px-3 py-1 text-sm">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">From:</label>
+                    <input type="date" name="start_date" value="<?= $startDate ?>" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1 text-sm bg-white dark:bg-gray-700 dark:text-white">
                 </div>
                 <div class="flex items-center space-x-2">
-                    <label class="text-sm font-medium text-gray-700">To:</label>
-                    <input type="date" name="end_date" value="<?= $endDate ?>" class="border rounded px-3 py-1 text-sm">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">To:</label>
+                    <input type="date" name="end_date" value="<?= $endDate ?>" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1 text-sm bg-white dark:bg-gray-700 dark:text-white">
                 </div>
-                <button type="submit" name="apply_filters" value="1" class="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700">
+                <button type="submit" name="apply_filters" value="1" class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-1 rounded text-sm hover:bg-blue-700 dark:hover:bg-blue-600">
                     Apply
                 </button>
                 <?php if (isset($_GET['apply_filters'])): ?>
-                    <a href="analytics.php" class="bg-white border border-gray-300 text-gray-700 px-4 py-1 rounded text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <a href="analytics.php" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-1 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Clear
                     </a>
                 <?php endif; ?>
@@ -317,8 +317,8 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                         <i class="fas fa-exclamation-triangle text-blue-600 text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm font-medium">Total <br> Incidents</p>
-                        <h3 class="text-2xl font-bold text-gray-800"><?= number_format($totalIncidents) ?></h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total <br> Incidents</p>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white"><?= number_format($totalIncidents) ?></h3>
                     </div>
                 </div>
             </div>
@@ -329,8 +329,8 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                         <i class="fas fa-clock text-yellow-600 text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm font-medium">Pending <br> Incidents</p>
-                        <h3 class="text-2xl font-bold text-gray-800"><?= number_format($openIncidents) ?></h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Pending <br> Incidents</p>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white"><?= number_format($openIncidents) ?></h3>
                     </div>
                 </div>
             </div>
@@ -341,8 +341,8 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                         <i class="fas fa-check-circle text-green-600 text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm font-medium">Resolved Incidents</p>
-                        <h3 class="text-2xl font-bold text-gray-800"><?= number_format($resolvedIncidents) ?></h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Resolved Incidents</p>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white"><?= number_format($resolvedIncidents) ?></h3>
                     </div>
                 </div>
             </div>
@@ -353,8 +353,8 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
                         <i class="fas fa-stopwatch text-purple-600 text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm font-medium">Avg. Resolution Time</p>
-                        <h3 class="text-2xl font-bold text-gray-800"><?= $avgResolutionTime ?></h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Avg. Resolution Time</p>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white"><?= $avgResolutionTime ?></h3>
                     </div>
                 </div>
             </div>

@@ -252,8 +252,8 @@ try {
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No incidents found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Try selecting a different filter.</p>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No incidents found</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Try selecting a different filter.</p>
                 </div>
                 
                 <?php if (empty($incidents)): ?>
@@ -261,8 +261,8 @@ try {
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No incidents reported</h3>
-                        <p class="mt-1 text-sm text-gray-500">Get started by reporting a new incident.</p>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No incidents reported</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by reporting a new incident.</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($incidents as $incident): 
@@ -282,7 +282,7 @@ try {
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                                     <div class="flex-1">
                                         <div class="flex items-center gap-2 flex-wrap">
-                                            <h3 class="text-lg font-medium text-gray-900">
+                                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                                                 <?php echo htmlspecialchars($incident['service_name']); ?>
                                             </h3>
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $impactClass; ?>">
@@ -292,7 +292,7 @@ try {
                                                 <?php echo ucfirst($incident['status']); ?>
                                             </span>
                                         </div>
-                                        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
                                             Reported by <?php echo htmlspecialchars($incident['user_name']); ?> on 
                                             <?php echo date('M j, Y g:i A', strtotime($incident['created_at'])); ?>
                                         </p>
@@ -310,40 +310,40 @@ try {
                                     <?php endif; ?>
                                 </div>
                             </div>
-                            <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+                            <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:p-6">
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <!-- LEFT COLUMN: Details -->
                                     <div class="space-y-4">
                                         <div>
-                                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Affected Companies</h4>
-                                            <p class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($incident['affected_companies']); ?></p>
+                                            <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Affected Companies</h4>
+                                            <p class="mt-1 text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($incident['affected_companies']); ?></p>
                                         </div>
                                         
                                         <div>
-                                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Root Cause</h4>
+                                            <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Root Cause</h4>
                                             <?php if (!empty($incident['root_cause'])): ?>
-                                                <p class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($incident['root_cause']); ?></p>
+                                                <p class="mt-1 text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($incident['root_cause']); ?></p>
                                             <?php else: ?>
-                                                <p class="mt-1 text-sm text-gray-500 italic">Not specified</p>
+                                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 italic">Not specified</p>
                                             <?php endif; ?>
                                         </div>
                                     </div>
                                     
                                     <!-- RIGHT COLUMN: Updates -->
-                                    <div class="lg:border-l lg:border-gray-200 lg:pl-6">
-                                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Updates (<?php echo $incident['update_count']; ?>)</h4>
+                                    <div class="lg:border-l lg:border-gray-200 dark:lg:border-gray-700 lg:pl-6">
+                                        <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Updates (<?php echo $incident['update_count']; ?>)</h4>
                                         
                                         <?php if (empty($incident['updates'])): ?>
-                                            <p class="text-sm text-gray-500 italic">No updates available.</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400 italic">No updates available.</p>
                                         <?php else: ?>
                                             <div class="space-y-3 mb-4">
                                                 <?php foreach ($incident['updates'] as $update): ?>
                                                     <div class="text-sm">
                                                         <div class="flex items-baseline gap-2">
-                                                            <span class="font-medium text-gray-900"><?php echo htmlspecialchars($update['user_name']); ?></span>
-                                                            <span class="text-xs text-gray-500">• <?php echo date('M j, g:i A', strtotime($update['created_at'])); ?></span>
+                                                            <span class="font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($update['user_name']); ?></span>
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400">• <?php echo date('M j, g:i A', strtotime($update['created_at'])); ?></span>
                                                         </div>
-                                                        <p class="mt-0.5 text-gray-700"><?php echo nl2br(htmlspecialchars($update['update_text'])); ?></p>
+                                                        <p class="mt-0.5 text-gray-700 dark:text-gray-300"><?php echo nl2br(htmlspecialchars($update['update_text'])); ?></p>
                                                     </div>
                                                 <?php endforeach; ?>
                                             </div>

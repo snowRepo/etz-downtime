@@ -198,6 +198,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     <!-- Tailwind CSS v3.4.17 -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     
     <!-- Alpine.js v3.x -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -220,19 +225,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 dark:bg-gray-900">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
 
     <!-- Main Content -->
     <main class="py-8">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white border border-gray-200 overflow-hidden rounded-xl" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
-                <div class="px-6 py-5 sm:px-8 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden rounded-xl" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+                <div class="px-6 py-5 sm:px-8 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                         Report New Incident
                     </h3>
-                    <p class="text-sm text-gray-600 mt-1">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         Fill in the details below to report a new downtime incident
                     </p>
                 </div>
@@ -269,25 +274,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     
                     <!-- Reporter Name -->
                     <div>
-                        <label for="user_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="user_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Your Name <span class="text-red-600">*</span>
                         </label>
                         <input type="text" 
                                name="user_name" 
                                id="user_name" 
                                required
-                               class="form-input block w-full border-gray-300 rounded-lg shadow-sm py-2.5 px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
+                               class="form-input block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2.5 px-3.5 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
                                placeholder="Enter your full name"
                                value="<?php echo isset($_POST['user_name']) ? sanitize($_POST['user_name']) : ''; ?>">
                     </div>
 
                     <!-- Service Selection -->
                     <div>
-                        <label for="service_id" class="block text-sm font-medium text-gray-700">
+                        <label for="service_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Service Affected <span class="text-red-500">*</span>
                         </label>
                         <div class="mt-1 relative">
-                            <button type="button" id="service-dropdown-button" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <button type="button" id="service-dropdown-button" class="relative w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 dark:text-white">
                                 <span id="service-selected-text" class="block truncate">Select service...</span>
                                 <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -295,16 +300,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </svg>
                                 </span>
                             </button>
-                            <div id="service-dropdown" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                            <div id="service-dropdown" class="hidden absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 dark:ring-gray-600 overflow-auto focus:outline-none sm:text-sm">
                                 <?php foreach ($services as $service): ?>
-                                    <div class="flex items-center px-4 py-2 hover:bg-gray-100">
+                                    <div class="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">
                                         <input type="radio" 
                                                id="service-<?php echo $service['service_id']; ?>" 
                                                name="service_id" 
                                                value="<?php echo $service['service_id']; ?>"
                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                                                <?php echo (isset($_POST['service_id']) && $_POST['service_id'] == $service['service_id']) ? 'checked' : ''; ?>>
-                                        <label for="service-<?php echo $service['service_id']; ?>" class="ml-3 block text-sm font-medium text-gray-700">
+                                        <label for="service-<?php echo $service['service_id']; ?>" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             <?php echo htmlspecialchars($service['service_name']); ?>
                                         </label>
                                     </div>
@@ -326,16 +331,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 endif; ?>
                             </div>
                         </div>
-                        <p class="mt-1 text-sm text-gray-500">Select the affected service</p>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Select the affected service</p>
                     </div>
 
                     <!-- Companies Affected -->
                     <div>
-                        <label for="company_ids" class="block text-sm font-medium text-gray-700">
+                        <label for="company_ids" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Companies Affected <span class="text-red-500">*</span>
                         </label>
                         <div class="mt-1 relative">
-                            <button type="button" id="company-dropdown-button" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <button type="button" id="company-dropdown-button" class="relative w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 dark:text-white">
                                 <span id="company-selected-text" class="block truncate">Select companies...</span>
                                 <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -343,9 +348,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </svg>
                                 </span>
                             </button>
-                            <div id="company-dropdown" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                            <div id="company-dropdown" class="hidden absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 dark:ring-gray-600 overflow-auto focus:outline-none sm:text-sm">
                                 <?php foreach ($companies as $company): ?>
-                                    <div class="flex items-center px-4 py-2 hover:bg-gray-100">
+                                    <div class="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">
                                     <input type="checkbox" id="company-<?php echo strtolower($company['company_name']) === 'all' ? 'all' : $company['company_id']; ?>" 
                                            name="company_ids[]" 
                                            value="<?php echo strtolower($company['company_name']) === 'all' ? 'all' : $company['company_id']; ?>"
@@ -361,7 +366,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                            }
                                            echo $isChecked ? 'checked' : ''; 
                                            ?>>
-                                    <label for="company-<?php echo strtolower($company['company_name']) === 'all' ? 'all' : $company['company_id']; ?>" class="ml-3 block text-sm font-medium text-gray-700">
+                                    <label for="company-<?php echo strtolower($company['company_name']) === 'all' ? 'all' : $company['company_id']; ?>" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         <?php echo htmlspecialchars($company['company_name']); ?>
                                     </label>
                                 </div>
@@ -384,18 +389,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <p class="mt-1 text-sm text-gray-500">Click to select multiple companies</p>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Click to select multiple companies</p>
                     </div>
 
                     <!-- Impact Level -->
                     <div>
-                        <span class="block text-sm font-medium text-gray-700">Impact Level <span class="text-red-500">*</span></span>
+                        <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Impact Level <span class="text-red-500">*</span></span>
                         <div class="mt-2 space-y-2">
                             <div class="flex items-center">
                                 <input id="impact-low" name="impact_level" type="radio" value="Low" 
                                     class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
                                     <?php echo (!isset($_POST['impact_level']) || (isset($_POST['impact_level']) && $_POST['impact_level'] === 'Low')) ? 'checked' : ''; ?>>
-                                <label for="impact-low" class="ml-3 block text-sm font-medium text-gray-700">
+                                <label for="impact-low" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Low - Minor impact, workaround available
                                 </label>
                             </div>
@@ -403,7 +408,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <input id="impact-medium" name="impact_level" type="radio" value="Medium" 
                                     class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
                                     <?php echo (isset($_POST['impact_level']) && $_POST['impact_level'] === 'Medium') ? 'checked' : ''; ?>>
-                                <label for="impact-medium" class="ml-3 block text-sm font-medium text-gray-700">
+                                <label for="impact-medium" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Medium - Significant impact, workaround may exist
                                 </label>
                             </div>
@@ -411,7 +416,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <input id="impact-high" name="impact_level" type="radio" value="High" 
                                     class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
                                     <?php echo (isset($_POST['impact_level']) && $_POST['impact_level'] === 'High') ? 'checked' : ''; ?>>
-                                <label for="impact-high" class="ml-3 block text-sm font-medium text-gray-700">
+                                <label for="impact-high" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     High - Critical impact, no workaround available
                                 </label>
                             </div>
@@ -420,18 +425,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <!-- Root Cause -->
                     <div>
-                        <label for="root_cause" class="block text-sm font-medium text-gray-700">
+                        <label for="root_cause" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Root Cause (Optional)
                         </label>
                         <div class="mt-1">
-                            <textarea id="root_cause" name="root_cause" rows="3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3"><?php echo isset($_POST['root_cause']) ? sanitize($_POST['root_cause']) : ''; ?></textarea>
+                            <textarea id="root_cause" name="root_cause" rows="3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md p-3 bg-white dark:bg-gray-700 dark:text-white"><?php echo isset($_POST['root_cause']) ? sanitize($_POST['root_cause']) : ''; ?></textarea>
                         </div>
-                        <p class="mt-1 text-sm text-gray-500">Briefly describe what caused the issue (if known)</p>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Briefly describe what caused the issue (if known)</p>
                     </div>
 
                     <div class="pt-5">
                         <div class="flex justify-end">
-                            <a href="index.php" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <a href="index.php" class="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 Cancel
                             </a>
                             <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
