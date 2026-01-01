@@ -374,12 +374,7 @@ try {
     <script>
         // Refresh dashboard function
         function refreshDashboard() {
-            const btn = event.target.closest('button');
-            const originalContent = btn.innerHTML;
-            
-            // Show loading state
-            btn.disabled = true;
-            btn.innerHTML = '<div class="btn-spinner"></div> Refreshing...';
+            showLoading('Refreshing dashboard...', 'Fetching latest data');
             
             // Reload the page
             setTimeout(() => {

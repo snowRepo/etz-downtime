@@ -229,6 +229,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
 
+    <!-- Loading Overlay -->
+    <?php include 'includes/loading.php'; ?>
+
     <!-- Main Content -->
     <main class="py-8">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

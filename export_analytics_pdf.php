@@ -427,17 +427,46 @@ try {
             $pdf->SetFillColor(37, 99, 235); // blue-600
             $pdf->Rect($x, $y, $barWidth, $barHeight, 'F');
             
-            // Add company label (truncated to fit)
+            // Add company label (truncated to fit) - removed value label
             $pdf->SetTextColor(17, 24, 39); // gray-900
             $pdf->Text($chartX + $chartWidth + 3, $y + $barHeight/2 + 1, truncateText($label, 25));
-            
-            // Add value label
-            $pdf->SetTextColor(75, 85, 99); // gray-600
-            $pdf->Text($x + $barWidth + 2, $y + $barHeight/2 + 1, $companyData[$index]);
         }
     }
     
+    // Move below the chart
+    $pdf->SetY($chartY + $chartHeight + 15);
+    
+    // Add summary table below the chart
+    $pdf->SetFont('helvetica', 'B', 11);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
+    $pdf->Cell(0, 8, 'Incident Count by Company', 0, 1, 'L');
+    $pdf->Ln(2);
+    
+    // Table header
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetFillColor(249, 250, 251); // gray-50
+    $pdf->SetTextColor(75, 85, 99); // gray-600
+    $pdf->SetDrawColor(229, 231, 235); // gray-200
+    
+    $colWidth1 = 120; // Company name
+    $colWidth2 = 60;  // Incident count
+    
+    $pdf->Cell($colWidth1, TABLE_HEADER_HEIGHT, 'COMPANY', 1, 0, 'L', 1);
+    $pdf->Cell($colWidth2, TABLE_HEADER_HEIGHT, 'INCIDENTS', 1, 1, 'C', 1);
+    
+    // Table data
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->SetTextColor(17, 24, 39); // gray-900
+    
+    foreach ($companyLabels as $index => $label) {
+        $pdf->Cell($colWidth1, TABLE_ROW_HEIGHT, $label, 1, 0, 'L');
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell($colWidth2, TABLE_ROW_HEIGHT, number_format($companyData[$index]), 1, 1, 'C');
+        $pdf->SetFont('helvetica', '', 9);
+    }
+    
     $pdf->Ln(10);
+
 
     // Impact Level Distribution Pie Chart
     $pdf->AddPage();

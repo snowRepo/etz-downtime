@@ -52,12 +52,12 @@ const STATUS_COLORS = [
     'investigating' => [37, 99, 235], // blue-600
 ];
 
-// Impact Level Color Mapping
+// Impact Level Color Mapping (lowercase keys for color lookup)
 const IMPACT_COLORS = [
-    'Critical' => [220, 38, 38],   // red-600
-    'High' => [239, 68, 68],       // red-500
-    'Medium' => [202, 138, 4],     // yellow-600
-    'Low' => [22, 163, 74],        // green-600
+    'critical' => [220, 38, 38],   // red-600
+    'high' => [239, 68, 68],       // red-500
+    'medium' => [202, 138, 4],     // yellow-600
+    'low' => [22, 163, 74],        // green-600
 ];
 
 /**

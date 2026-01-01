@@ -192,6 +192,9 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
     
+    <!-- Loading Overlay -->
+    <?php include 'includes/loading.php'; ?>
+    
     <main class="py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header with title and export button -->

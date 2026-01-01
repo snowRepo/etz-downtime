@@ -44,7 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
             di.incident_id,
             COALESCE(di.actual_start_time, ir.created_at) as actual_start_time,
             di.actual_end_time,
-            di.downtime_minutes,
+            CASE 
+                WHEN di.actual_end_time IS NOT NULL THEN 
+                    COALESCE(di.downtime_minutes, TIMESTAMPDIFF(MINUTE, di.actual_start_time, di.actual_end_time))
+                WHEN di.actual_start_time IS NOT NULL THEN 
+                    TIMESTAMPDIFF(MINUTE, di.actual_start_time, NOW())
+                ELSE 
+                    0
+            END as downtime_minutes,
             di.is_planned,
             di.downtime_category
         FROM issues_reported ir
@@ -156,6 +163,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
 <body class="bg-gray-100 dark:bg-gray-900">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
+
+    <!-- Loading Overlay -->
+    <?php include 'includes/loading.php'; ?>
 
     <!-- Main Content -->
     <main class="pt-4 pb-10">
@@ -346,7 +356,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 gap-5 mt-6 sm:grid-cols-3 mb-6">
                     <!-- SLA Target Card -->
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border dark:border-gray-700">
                         <div class="px-4 py-5 sm:p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
@@ -369,7 +379,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                     </div>
 
                     <!-- Downtime Card -->
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border dark:border-gray-700">
                         <div class="px-4 py-5 sm:p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
@@ -395,7 +405,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                     </div>
 
                     <!-- Uptime Card -->
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border dark:border-gray-700">
                         <div class="px-4 py-5 sm:p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
@@ -448,7 +458,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($reportData['downtimeByService'] as $service): ?>
-                                        <tr class="hover:bg-gray-50">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-center">
                                                 <?= htmlspecialchars($service['name']) ?>
                                             </td>
@@ -507,7 +517,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                             'Critical' => 'bg-red-100 text-red-800'
                                         ][$incident['impact_level'] ?? 'Low'] ?? 'bg-gray-100 text-gray-800';
                                     ?>
-                                        <tr class="hover:bg-gray-50">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-center">
                                                 <?= htmlspecialchars($incident['service_name']) ?>
                                             </td>
@@ -518,13 +528,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">
                                                 <?php 
-                                                if (empty($incident['actual_end_time']) || $incident['actual_end_time'] == '0000-00-00 00:00:00') {
+                                                if (empty($incident['actual_end_time']) || $incident['actual_end_time'] == '0000-00-00 00:00:00' || is_null($incident['actual_end_time'])) {
                                                     if (($incident['status'] ?? '') === 'resolved') {
-                                                        // If status is resolved but no end time, show status
-                                                        echo 'Resolved (No end time)';
+                                                        // If status is resolved but no end time, show the resolved_at time
+                                                        if (!empty($incident['resolved_at'])) {
+                                                            echo date('M j, Y H:i', strtotime($incident['resolved_at']));
+                                                        } else {
+                                                            echo '<span class="text-gray-500">Resolved (No time)</span>';
+                                                        }
                                                     } else {
                                                         // If status is pending and no end time, show Ongoing
-                                                        echo '<span class="text-red-600">Ongoing</span>';
+                                                        echo '<span class="text-orange-600 dark:text-orange-400 font-semibold">Ongoing</span>';
                                                     }
                                                 } else {
                                                     // Show the actual end time if it exists
