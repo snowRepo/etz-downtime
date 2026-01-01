@@ -92,8 +92,8 @@ try {
             i.impact_level,
             i.user_name,
             i.created_at,
-            i.resolved_by,
-            i.resolved_at,
+            MAX(i.resolved_by) as resolved_by,
+            MAX(i.resolved_at) as resolved_at,
             MAX(i.updated_at) as updated_at,
             s.service_name,
             GROUP_CONCAT(DISTINCT c.company_name ORDER BY c.company_name SEPARATOR ', ') as affected_companies,
@@ -102,7 +102,7 @@ try {
         FROM issues_reported i
         JOIN services s ON i.service_id = s.service_id
         JOIN companies c ON i.company_id = c.company_id
-        GROUP BY i.service_id, i.root_cause, i.status, i.impact_level, i.user_name, i.created_at, s.service_name, i.resolved_by, i.resolved_at
+        GROUP BY i.service_id, i.root_cause, i.status, i.impact_level, i.user_name, i.created_at, s.service_name
         ORDER BY 
             FIELD(i.status, 'pending', 'resolved'),
             MAX(i.updated_at) DESC
@@ -190,6 +190,9 @@ try {
 <body class="bg-gray-50 dark:bg-gray-900">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
+    
+    <!-- Loading Overlay -->
+    <?php include 'includes/loading.php'; ?>
 
     <!-- Main Content -->
     <main class="py-6">
@@ -209,11 +212,37 @@ try {
             <?php unset($_SESSION['success']); ?>
         <?php endif; ?>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="md:flex md:items-center md:justify-between mb-6">
-                <div class="flex-1 min-w-0">
+            <!-- Page Header -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
                     <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-                        All Incidents
+                        Incident Management
                     </h2>
+                </div>
+                <div class="mt-4 sm:mt-0 flex items-center space-x-3">
+                    <span class="text-xs text-gray-500 dark:text-gray-400" id="last-updated">
+                        Last updated: <?php echo date('g:i A'); ?>
+                    </span>
+                    <button onclick="refreshIncidents()" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search and Filter Bar -->
+            <div class="mb-6 flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="incident-search" placeholder="Search incidents by service, company, or root cause..." class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm" onkeyup="filterIncidents()">
+                    </div>
                 </div>
                 <div class="mt-4 flex md:mt-0 md:ml-6">
                     <div class="inline-flex rounded-lg shadow-sm" role="group">
@@ -305,7 +334,7 @@ try {
                                         </button>
                                     <?php else: ?>
                                         <span class="text-sm text-green-600 font-medium">
-                                            Resolved by <?php echo htmlspecialchars($incident['resolved_by'] ?? 'System'); ?> on <?php echo date('M j, Y g:i A', strtotime($incident['resolved_at'] ?? $incident['updated_at'])); ?>
+                                            Resolved by <?php echo htmlspecialchars($incident['resolved_by'] ?? 'System'); ?> on <?php echo $incident['resolved_at'] ? date('M j, Y g:i A', strtotime($incident['resolved_at'])) : 'Unknown'; ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -599,6 +628,39 @@ try {
                 });
             });
         });
+    </script>
+    
+    <script>
+        // Search/Filter incidents
+        function filterIncidents() {
+            const searchTerm = document.getElementById('incident-search').value.toLowerCase();
+            const cards = document.querySelectorAll('.incident-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // Refresh incidents function
+        function refreshIncidents() {
+            const btn = event.target.closest('button');
+            
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<div class="btn-spinner"></div> Refreshing...';
+            
+            // Reload the page
+            setTimeout(() => {
+                location.reload();
+            }, 300);
+        }
     </script>
 </body>
 </html>

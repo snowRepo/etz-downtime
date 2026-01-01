@@ -27,20 +27,20 @@ try {
     ");
     $pending = $pending_query->fetchColumn();
     
-    // Get services with reported issues, grouped by service with all companies
+    // Get services with reported issues, grouped by service and status
     $recent_incidents = $pdo->query("
         SELECT 
             s.service_name,
             s.service_id,
+            i.status,
             GROUP_CONCAT(DISTINCT c.company_name ORDER BY c.company_name) as company_names,
             COUNT(DISTINCT i.issue_id) as incident_count,
             MAX(i.created_at) as date_reported,
-            MAX(CASE WHEN i.status = 'resolved' THEN i.updated_at ELSE NULL END) as date_resolved,
-            GROUP_CONCAT(DISTINCT i.status) as statuses
+            MAX(i.resolved_at) as date_resolved
         FROM issues_reported i
         JOIN services s ON i.service_id = s.service_id
         JOIN companies c ON i.company_id = c.company_id
-        GROUP BY s.service_id, s.service_name
+        GROUP BY s.service_id, s.service_name, i.status
         ORDER BY date_reported DESC, s.service_name
         LIMIT 10
     ")->fetchAll(PDO::FETCH_ASSOC);
@@ -96,19 +96,39 @@ try {
         .table-row-hover:hover {
             background-color: #f9fafb;
         }
+        
+        .dark .table-row-hover:hover {
+            background-color: #374151;
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
     <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
+    
+    <!-- Loading Overlay -->
+    <?php include 'includes/loading.php'; ?>
 
     <!-- Main Content -->
     <main class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Page Header -->
-            <div class="mb-8">
-                <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Monitor and manage downtime incidents across all services</p>
+            <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Monitor and manage downtime incidents across all services</p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex items-center space-x-3">
+                    <span class="text-xs text-gray-500 dark:text-gray-400" id="last-updated">
+                        Last updated: <?php echo date('g:i A'); ?>
+                    </span>
+                    <button onclick="refreshDashboard()" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
             </div>
             
             <!-- Stats Cards -->
@@ -242,9 +262,8 @@ try {
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($recent_incidents as $incident): 
-                                    // Get the first status from the comma-separated list as the main status for display
-                                    $statuses = !empty($incident['statuses']) ? explode(',', $incident['statuses']) : [];
-                                    $mainStatus = !empty($statuses) ? $statuses[0] : '';
+                                    // Get the status for this row
+                                    $mainStatus = $incident['status'];
                                     
                                     $statusClass = [
                                         'pending' => 'bg-yellow-100 text-yellow-800',
@@ -321,41 +340,25 @@ try {
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
                                             <?php 
-                                                $statuses = !empty($incident['statuses']) ? explode(',', $incident['statuses']) : [];
+                                                // Use the status field from the query
+                                                $currentStatus = $incident['status'];
                                                 
-                                                if (empty($statuses)) {
-                                                    echo '<span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">No Issues</span>';
-                                                } else {
-                                                    // Show the most severe status only (no count)
-                                                    $statusOrder = ['pending' => 1, 'investigating' => 2, 'resolved' => 3];
-                                                    $currentStatus = '';
-                                                    $currentPriority = PHP_INT_MAX;
-                                                    
-                                                    foreach ($statuses as $status) {
-                                                        $priority = $statusOrder[$status] ?? PHP_INT_MAX;
-                                                        if ($priority < $currentPriority) {
-                                                            $currentStatus = $status;
-                                                            $currentPriority = $priority;
-                                                        }
-                                                    }
-                                                    
-                                                    $statusClass = [
-                                                        'pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
-                                                        'resolved' => 'bg-green-100 text-green-800 border-green-200',
-                                                        'investigating' => 'bg-blue-100 text-blue-800 border-blue-200'
-                                                    ][$currentStatus] ?? 'bg-gray-100 text-gray-800 border-gray-200';
-                                                    
-                                                    $statusIcon = [
-                                                        'pending' => 'fa-clock',
-                                                        'resolved' => 'fa-check-circle',
-                                                        'investigating' => 'fa-search'
-                                                    ][$currentStatus] ?? 'fa-question-circle';
-                                                    
-                                                    echo '<span class="px-3 py-1.5 inline-flex items-center text-xs leading-5 font-semibold rounded-full border ' . $statusClass . '">' . 
-                                                         '<i class="fas ' . $statusIcon . ' mr-1.5"></i>' .
-                                                         ucfirst($currentStatus) . 
-                                                         '</span>';
-                                                }
+                                                $statusClass = [
+                                                    'pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                                    'resolved' => 'bg-green-100 text-green-800 border-green-200',
+                                                    'investigating' => 'bg-blue-100 text-blue-800 border-blue-200'
+                                                ][$currentStatus] ?? 'bg-gray-100 text-gray-800 border-gray-200';
+                                                
+                                                $statusIcon = [
+                                                    'pending' => 'fa-clock',
+                                                    'resolved' => 'fa-check-circle',
+                                                    'investigating' => 'fa-search'
+                                                ][$currentStatus] ?? 'fa-question-circle';
+                                                
+                                                echo '<span class="px-3 py-1.5 inline-flex items-center text-xs leading-5 font-semibold rounded-full border ' . $statusClass . '">' . 
+                                                     '<i class="fas ' . $statusIcon . ' mr-1.5"></i>' .
+                                                     ucfirst($currentStatus) . 
+                                                     '</span>';
                                             ?>
                                         </td>
                                     </tr>
@@ -367,6 +370,32 @@ try {
             </div>
         </div>
     </main>
-
+    
+    <script>
+        // Refresh dashboard function
+        function refreshDashboard() {
+            const btn = event.target.closest('button');
+            const originalContent = btn.innerHTML;
+            
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<div class="btn-spinner"></div> Refreshing...';
+            
+            // Reload the page
+            setTimeout(() => {
+                location.reload();
+            }, 300);
+        }
+        
+        // Update last updated time
+        function updateLastUpdatedTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const lastUpdated = document.getElementById('last-updated');
+            if (lastUpdated) {
+                lastUpdated.textContent = 'Last updated: ' + timeString;
+            }
+        }
+    </script>
 </body>
 </html>
