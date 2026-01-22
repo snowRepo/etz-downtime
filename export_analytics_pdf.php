@@ -1,6 +1,10 @@
 <?php
 require_once 'config.php';
+require_once 'auth.php';
 require_once 'vendor/autoload.php';
+
+session_start();
+Auth::requireLogin();
 
 // Include TCPDF library
 require_once('vendor/tecnickcom/tcpdf/tcpdf.php');
@@ -25,12 +29,13 @@ try {
                         status, 
                         COUNT(DISTINCT CONCAT(service_id, '-', root_cause)) as count 
                     FROM issues_reported 
-                    WHERE created_at BETWEEN ? AND ? " . 
-                    ($companyId ? "AND company_id = ? " : "") . 
-                    "GROUP BY status";
+                    WHERE created_at BETWEEN ? AND ? " .
+        ($companyId ? "AND company_id = ? " : "") .
+        "GROUP BY status";
     $stmt = $pdo->prepare($statusQuery);
     $params = [$startDate, $endDate];
-    if ($companyId) $params[] = $companyId;
+    if ($companyId)
+        $params[] = $companyId;
     $stmt->execute($params);
     $incidentsByStatus = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -40,9 +45,9 @@ try {
                         COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as incident_count 
                     FROM issues_reported i
                     JOIN companies c ON i.company_id = c.company_id
-                    WHERE i.created_at BETWEEN ? AND ? " . 
-                    ($companyId ? "AND i.company_id = ? " : "") . 
-                    "GROUP BY i.company_id 
+                    WHERE i.created_at BETWEEN ? AND ? " .
+        ($companyId ? "AND i.company_id = ? " : "") .
+        "GROUP BY i.company_id 
                     ORDER BY incident_count DESC";
     $stmt = $pdo->prepare($companyQuery);
     $stmt->execute($params);
@@ -53,9 +58,9 @@ try {
                     DATE_FORMAT(i.created_at, '%Y-%m') as month,
                     COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as incident_count
                    FROM issues_reported i
-                   WHERE i.created_at BETWEEN ? AND ? " . 
-                   ($companyId ? "AND i.company_id = ? " : "") . 
-                   "GROUP BY DATE_FORMAT(i.created_at, '%Y-%m')
+                   WHERE i.created_at BETWEEN ? AND ? " .
+        ($companyId ? "AND i.company_id = ? " : "") .
+        "GROUP BY DATE_FORMAT(i.created_at, '%Y-%m')
                    ORDER BY month";
     $stmt = $pdo->prepare($trendQuery);
     $stmt->execute($params);
@@ -64,9 +69,9 @@ try {
     // Get impact level distribution
     $impactQuery = "SELECT impact_level, COUNT(*) as count 
                    FROM issues_reported i
-                   WHERE i.created_at BETWEEN ? AND ? " . 
-                   ($companyId ? "AND i.company_id = ? " : "") . 
-                   "GROUP BY impact_level";
+                   WHERE i.created_at BETWEEN ? AND ? " .
+        ($companyId ? "AND i.company_id = ? " : "") .
+        "GROUP BY impact_level";
     $stmt = $pdo->prepare($impactQuery);
     $stmt->execute($params);
     $impactLevels = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -75,14 +80,14 @@ try {
     $totalIncidents = 0;
     $openIncidents = 0;
     $resolvedIncidents = 0;
-    
+
     foreach ($incidentsByStatus as $status) {
-        $totalIncidents += (int)$status['count'];
+        $totalIncidents += (int) $status['count'];
         if ($status['status'] === 'pending') {
-            $openIncidents = (int)$status['count'];
+            $openIncidents = (int) $status['count'];
         }
         if ($status['status'] === 'resolved') {
-            $resolvedIncidents = (int)$status['count'];
+            $resolvedIncidents = (int) $status['count'];
         }
     }
 
@@ -91,17 +96,17 @@ try {
                       FROM issues_reported i
                       JOIN downtime_incidents d ON i.issue_id = d.issue_id
                       WHERE d.actual_start_time IS NOT NULL
-                      AND i.created_at BETWEEN ? AND ? " . 
-                      ($companyId ? "AND i.company_id = ? " : "");
+                      AND i.created_at BETWEEN ? AND ? " .
+        ($companyId ? "AND i.company_id = ? " : "");
     $stmt = $pdo->prepare($resolutionQuery);
     $stmt->execute($params);
     $avgResolution = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     $avgResolutionTime = 'N/A';
     if ($avgResolution && $avgResolution['avg_hours'] !== null) {
         $avgHours = round($avgResolution['avg_hours'], 1);
-        $avgResolutionTime = $avgHours < 24 
-            ? $avgHours . ' hours' 
+        $avgResolutionTime = $avgHours < 24
+            ? $avgHours . ' hours'
             : round($avgHours / 24, 1) . ' days';
     }
 
@@ -111,7 +116,7 @@ try {
     // Set document information
     $pdf->SetCreator('eTranzact Analytics Report');
     $pdf->SetAuthor('eTranzact');
-    
+
     // Get company name for title if company is selected
     $companyName = 'All Companies';
     if ($companyId) {
@@ -119,7 +124,7 @@ try {
         $companyStmt->execute([$companyId]);
         $companyName = $companyStmt->fetchColumn() ?: 'Unknown Company';
     }
-    
+
     $pdf->SetTitle('Analytics Report - ' . $companyName . ' - ' . $startDate . ' to ' . $endDate);
     $pdf->SetSubject('Analytics Report');
     $pdf->SetKeywords('Analytics, Report, eTranzact');
@@ -128,8 +133,8 @@ try {
     $pdf->SetHeaderData('', 0, 'Analytics Report', 'Period: ' . $startDate . ' to ' . $endDate . '\nGenerated on: ' . date('Y-m-d H:i:s'));
 
     // Set header and footer fonts
-    $pdf->setHeaderFont(Array('helvetica', '', 10));
-    $pdf->setFooterFont(Array('helvetica', '', 8));
+    $pdf->setHeaderFont(array('helvetica', '', 10));
+    $pdf->setFooterFont(array('helvetica', '', 8));
 
     // Set default monospaced font
     $pdf->SetDefaultMonospacedFont('helvetica');
@@ -222,7 +227,7 @@ try {
         foreach ($incidentsByStatus as $statusItem) {
             if (strtolower($statusItem['status']) === $status) {
                 $statusLabels[] = ucfirst($status);
-                $statusData[] = (int)$statusItem['count'];
+                $statusData[] = (int) $statusItem['count'];
                 $found = true;
                 $hasStatusData = $hasStatusData || $statusItem['count'] > 0;
                 break;
@@ -249,7 +254,7 @@ try {
     if (!$hasData) {
         // For no data, just show a gray circle with text
         $pdf->SetFillColor(200, 200, 200);
-        $pdf->PieSector($centerX, $centerY, $radius, 0, 360, 'F', false, 0, 2);
+        $pdf->PieSector($centerX, $centerY, $radius, 0, 360, 'F', false, 0);
 
         // Add "No Data" text in the center
         $pdf->SetFont('helvetica', 'B', 14);
@@ -268,7 +273,7 @@ try {
                 $angle = ($value / $total) * 360;
                 $color = $statusColors[array_keys($statusLabels)[$index]] ?? [200, 200, 200];
                 $pdf->SetFillColor($color[0], $color[1], $color[2]);
-                $pdf->PieSector($centerX, $centerY, $radius, $startAngle, $startAngle + $angle, 'F', false, 0, 2);
+                $pdf->PieSector($centerX, $centerY, $radius, $startAngle, $startAngle + $angle, 'F', false, 0);
                 $startAngle += $angle;
             }
             $i++;
@@ -290,11 +295,14 @@ try {
         $color = $statusColors[strtolower($label)] ?? [200, 200, 200];
         $pdf->SetFillColor($color[0], $color[1], $color[2]);
         $pdf->Rect($legendX, $legendY + $i * 6, $boxSize, $boxSize, 'F');
-        
+
         $value = $statusData[$index] ?? 0;
         $percentage = $total > 0 ? number_format(($value / $total) * 100, 1) : 0;
-        $pdf->Text($legendX + $boxSize + 2, $legendY + $i * 6 + $boxSize - 1, 
-                  $label . ': ' . $value . ' (' . $percentage . '%)');
+        $pdf->Text(
+            $legendX + $boxSize + 2,
+            $legendY + $i * 6 + $boxSize - 1,
+            $label . ': ' . $value . ' (' . $percentage . '%)'
+        );
         $i++;
     }
 
@@ -311,7 +319,7 @@ try {
     $monthlyData = [];
     foreach ($monthlyTrend as $month) {
         $monthlyLabels[] = date('M Y', strtotime($month['month'] . '-01'));
-        $monthlyData[] = (int)$month['incident_count'];
+        $monthlyData[] = (int) $month['incident_count'];
     }
 
     // Draw bar chart for monthly trend
@@ -362,7 +370,7 @@ try {
 
         // Add month label (rotated)
         $pdf->StartTransform();
-        $pdf->Rotate(45, $x + $width/2, $chartY + $chartHeight + 5);
+        $pdf->Rotate(45, $x + $width / 2, $chartY + $chartHeight + 5);
         $pdf->Text($x, $chartY + $chartHeight + 5, $label);
         $pdf->StopTransform();
     }
@@ -378,7 +386,7 @@ try {
     $companyData = [];
     foreach ($incidentsByCompany as $company) {
         $companyLabels[] = $company['company_name'];
-        $companyData[] = (int)$company['incident_count'];
+        $companyData[] = (int) $company['incident_count'];
     }
 
     // Draw horizontal bar chart for companies
@@ -420,16 +428,16 @@ try {
         $barWidth = ($companyData[$index] / $maxData) * $chartWidth;
         $x = $chartX;
         $y = $chartY + 5 + ($index * ($chartHeight - 10) / max(count($companyLabels), 1));
-        
+
         $color = $barColors[$index % count($barColors)];
         $pdf->SetFillColor($color[0], $color[1], $color[2]);
         $pdf->Rect($x, $y, $barWidth, $barHeight, 'F');
-        
+
         // Add company label
-        $pdf->Text($chartX + $chartWidth + 5, $y + $barHeight/2 + 2, substr($label, 0, 30));
-        
+        $pdf->Text($chartX + $chartWidth + 5, $y + $barHeight / 2 + 2, substr($label, 0, 30));
+
         // Add value label
-        $pdf->Text($x + $barWidth + 2, $y + $barHeight/2 + 2, $companyData[$index]);
+        $pdf->Text($x + $barWidth + 2, $y + $barHeight / 2 + 2, $companyData[$index]);
     }
 
     // Impact Level Distribution Pie Chart
@@ -450,7 +458,7 @@ try {
 
     foreach ($impactLevels as $impact) {
         $impactLabels[] = $impact['impact_level'];
-        $impactData[] = (int)$impact['count'];
+        $impactData[] = (int) $impact['count'];
     }
 
     // Draw pie chart for impact levels
@@ -468,7 +476,7 @@ try {
     if (!$hasImpactData) {
         // For no data, just show a gray circle with text
         $pdf->SetFillColor(200, 200, 200);
-        $pdf->PieSector($centerX, $centerY, $radius, 0, 360, 'F', false, 0, 2);
+        $pdf->PieSector($centerX, $centerY, $radius, 0, 360, 'F', false, 0);
 
         // Add "No Data" text in the center
         $pdf->SetFont('helvetica', 'B', 14);
@@ -488,7 +496,7 @@ try {
                 $label = $impactLabels[$index];
                 $color = $impactColors[$label] ?? [200, 200, 200];
                 $pdf->SetFillColor($color[0], $color[1], $color[2]);
-                $pdf->PieSector($centerX, $centerY, $radius, $startAngle, $startAngle + $angle, 'F', false, 0, 2);
+                $pdf->PieSector($centerX, $centerY, $radius, $startAngle, $startAngle + $angle, 'F', false, 0);
                 $startAngle += $angle;
             }
             $i++;
@@ -510,11 +518,14 @@ try {
         $color = $impactColors[$label] ?? [200, 200, 200];
         $pdf->SetFillColor($color[0], $color[1], $color[2]);
         $pdf->Rect($legendX, $legendY + $i * 6, $boxSize, $boxSize, 'F');
-        
+
         $value = $impactData[$index] ?? 0;
         $percentage = $total > 0 ? number_format(($value / $total) * 100, 1) : 0;
-        $pdf->Text($legendX + $boxSize + 2, $legendY + $i * 6 + $boxSize - 1, 
-                  $label . ': ' . $value . ' (' . $percentage . '%)');
+        $pdf->Text(
+            $legendX + $boxSize + 2,
+            $legendY + $i * 6 + $boxSize - 1,
+            $label . ': ' . $value . ' (' . $percentage . '%)'
+        );
         $i++;
     }
 
@@ -522,7 +533,7 @@ try {
     $pdf->AddPage();
     $pdf->SetFont('helvetica', 'B', 12);
     $pdf->Cell(0, 10, 'Detailed Incidents Summary', 0, 1, 'L');
-    
+
     // Build query to get detailed incidents data
     $detailedQuery = "SELECT 
                         ir.issue_id,
@@ -536,17 +547,17 @@ try {
                       JOIN companies c ON ir.company_id = c.company_id
                       JOIN services s ON ir.service_id = s.service_id
                       WHERE ir.created_at BETWEEN ? AND ? ";
-    
+
     $detailedParams = [$startDate, $endDate];
-    
+
     if ($companyId) {
         $detailedQuery .= " AND ir.company_id = ? ";
         $detailedParams[] = $companyId;
     }
-    
+
     $detailedQuery .= " ORDER BY ir.created_at DESC
                       LIMIT 50"; // Limit to prevent too many records
-    
+
     $stmt = $pdo->prepare($detailedQuery);
     $stmt->execute($detailedParams);
     $detailedIncidents = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -556,72 +567,72 @@ try {
         $pdf->Cell(0, 10, 'No incidents found for the selected period.', 0, 1, 'C');
     } else {
         $pdf->SetFont('helvetica', '', 10);
-        
+
         // Table header
         $header = ['ID', 'Company', 'Service', 'Impact', 'Status', 'Created', 'Resolved'];
         $w = [15, 35, 40, 25, 20, 30, 30];
-        
+
         // Set fill color for header
         $pdf->SetFillColor(220, 220, 220);
         $pdf->SetFont('helvetica', 'B', 10);
-        
+
         // Header
-        for($i = 0; $i < count($header); $i++) {
+        for ($i = 0; $i < count($header); $i++) {
             $pdf->Cell($w[$i], 7, $header[$i], 1, 0, 'C', 1);
         }
         $pdf->Ln();
-        
+
         // Data
         $pdf->SetFont('helvetica', '', 9);
         $fill = false;
-        
+
         foreach ($detailedIncidents as $incident) {
             // Check if we need a new page
             if ($pdf->GetY() > 200) {
                 $pdf->AddPage();
                 // Add table header on new page
                 $pdf->SetFont('helvetica', 'B', 10);
-                for($i = 0; $i < count($header); $i++) {
+                for ($i = 0; $i < count($header); $i++) {
                     $pdf->Cell($w[$i], 7, $header[$i], 1, 0, 'C', 1);
                 }
                 $pdf->Ln();
                 $pdf->SetFont('helvetica', '', 9);
             }
-            
+
             // Format dates
             $created = date('Y-m-d', strtotime($incident['created_at']));
             $resolved = $incident['resolved_at'] ? date('Y-m-d', strtotime($incident['resolved_at'])) : 'N/A';
-            
+
             // Set fill color for alternate rows
             $pdf->SetFillColor($fill ? 240 : 255, $fill ? 240 : 255, $fill ? 240 : 255);
-            
+
             // Draw cells
             $pdf->Cell($w[0], 6, $incident['issue_id'], 'LR', 0, 'C', $fill);
             $pdf->Cell($w[1], 6, substr($incident['company_name'], 0, 15), 'LR', 0, 'L', $fill);
             $pdf->Cell($w[2], 6, substr($incident['service_name'], 0, 18), 'LR', 0, 'L', $fill);
             $pdf->Cell($w[3], 6, $incident['impact_level'], 'LR', 0, 'C', $fill);
-            
+
             // Status with color coding
             $status = $incident['status'] ?? 'open';
             $statusColor = $status === 'resolved' ? [50, 205, 50] : [255, 165, 0]; // Green for resolved, orange for others
             $pdf->SetFillColor($statusColor[0], $statusColor[1], $statusColor[2]);
             $pdf->Cell($w[4], 6, ucfirst($status), 'LR', 0, 'C', 1);
-            
+
             $pdf->SetFillColor($fill ? 240 : 255, $fill ? 240 : 255, $fill ? 240 : 255);
             $pdf->Cell($w[5], 6, $created, 'LR', 0, 'C', $fill);
             $pdf->Cell($w[6], 6, $resolved, 'LR', 1, 'C', $fill);
-            
+
             $fill = !$fill;
         }
-        
+
         // Close the table
         $pdf->Cell(array_sum($w), 0, '', 'T');
     }
 
     // Set filename
-    $filename = 'Analytics_Report_' . 
-               ($companyId ? preg_replace('/[^a-zA-Z0-9]/', '_', $companyName) . '_' : '') . 
-               $startDate . '_to_' . $endDate . '.pdf';
+    $filename = 'Analytics_Report_' .
+        ($companyId ? preg_replace('/[^a-zA-Z0-9]/', '_', $companyName) . '_' : '') .
+        $startDate . '_to_' . $endDate . '.pdf';
 
     // Output PDF to browser
     $pdf->Output($filename, 'D');

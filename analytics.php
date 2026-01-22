@@ -1,6 +1,10 @@
 <?php
 require_once 'config.php';
+require_once 'auth.php';
 session_start();
+
+// Require authentication for all pages
+Auth::requireLogin();
 
 // Set default date range (last 30 days including today)
 $endDate = date('Y-m-d', strtotime('+1 day')); // Include today by going to start of next day
@@ -13,13 +17,13 @@ $endDate = $_GET['end_date'] ?? $endDate;
 
 // Fetch data for charts
 try {
-    // Get total incidents by status (grouped by service and root cause)
+    // Get total incidents by status
     $statusQuery = "SELECT 
                         status, 
-                        COUNT(DISTINCT CONCAT(service_id, '-', root_cause)) as count 
-                    FROM issues_reported 
+                        COUNT(*) as count 
+                    FROM incidents 
                     WHERE created_at BETWEEN ? AND ? " . 
-                    ($companyId ? "AND company_id = ? " : "") . 
+                    ($companyId ? "AND incident_id IN (SELECT incident_id FROM incident_affected_companies WHERE company_id = ?) " : "") . 
                     "GROUP BY status";
     $stmt = $pdo->prepare($statusQuery);
     $params = [$startDate, $endDate];
@@ -27,15 +31,16 @@ try {
     $stmt->execute($params);
     $incidentsByStatus = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Get incidents by company (count distinct by service and root cause)
+    // Get incidents by company
     $companyQuery = "SELECT 
                         c.company_name, 
-                        COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as incident_count 
-                    FROM issues_reported i
-                    JOIN companies c ON i.company_id = c.company_id
+                        COUNT(DISTINCT i.incident_id) as incident_count 
+                    FROM incidents i
+                    JOIN incident_affected_companies iac ON i.incident_id = iac.incident_id
+                    JOIN companies c ON iac.company_id = c.company_id
                     WHERE i.created_at BETWEEN ? AND ? " . 
-                    ($companyId ? "AND i.company_id = ? " : "") . 
-                    "GROUP BY i.company_id 
+                    ($companyId ? "AND iac.company_id = ? " : "") . 
+                    "GROUP BY iac.company_id, c.company_name
                     ORDER BY incident_count DESC";
     $stmt = $pdo->prepare($companyQuery);
     $stmt->execute($params);
@@ -44,10 +49,10 @@ try {
     // Get monthly trend
     $trendQuery = "SELECT 
                     DATE_FORMAT(i.created_at, '%Y-%m') as month,
-                    COUNT(DISTINCT CONCAT(i.service_id, '-', i.root_cause)) as incident_count
-                   FROM issues_reported i
+                    COUNT(DISTINCT i.incident_id) as incident_count
+                   FROM incidents i
                    WHERE i.created_at BETWEEN ? AND ? " . 
-                   ($companyId ? "AND i.company_id = ? " : "") . 
+                   ($companyId ? "AND i.incident_id IN (SELECT incident_id FROM incident_affected_companies WHERE company_id = ?) " : "") . 
                    "GROUP BY DATE_FORMAT(i.created_at, '%Y-%m')
                    ORDER BY month";
     $stmt = $pdo->prepare($trendQuery);
@@ -56,9 +61,9 @@ try {
 
     // Get impact level distribution
     $impactQuery = "SELECT impact_level, COUNT(*) as count 
-                   FROM issues_reported i
+                   FROM incidents i
                    WHERE i.created_at BETWEEN ? AND ? " . 
-                   ($companyId ? "AND i.company_id = ? " : "") . 
+                   ($companyId ? "AND i.incident_id IN (SELECT incident_id FROM incident_affected_companies WHERE company_id = ?) " : "") . 
                    "GROUP BY impact_level";
     $stmt = $pdo->prepare($impactQuery);
     $stmt->execute($params);
@@ -265,11 +270,11 @@ $companies = $pdo->query("SELECT company_id, company_name FROM companies ORDER B
             
             // Calculate average resolution time (in hours)
             $resolutionQuery = "SELECT AVG(TIMESTAMPDIFF(HOUR, d.actual_start_time, COALESCE(d.actual_end_time, NOW()))) as avg_hours 
-                              FROM issues_reported i
-                              JOIN downtime_incidents d ON i.issue_id = d.issue_id
+                              FROM incidents i
+                              JOIN downtime_incidents d ON i.incident_id = d.incident_id
                               WHERE d.actual_start_time IS NOT NULL
                               AND i.created_at BETWEEN ? AND ? " . 
-                              ($companyId ? "AND i.company_id = ? " : "");
+                              ($companyId ? "AND i.incident_id IN (SELECT incident_id FROM incident_affected_companies WHERE company_id = ?) " : "");
             $stmt = $pdo->prepare($resolutionQuery);
             $stmt->execute($params);
             $avgResolution = $stmt->fetch(PDO::FETCH_ASSOC);

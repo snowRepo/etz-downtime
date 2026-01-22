@@ -58,12 +58,15 @@ composer.phar
 # Local config with credentials
 config.php
 
-# Uploads
-/public/uploads/
-
 # System Files
 .htaccess
 .htpasswd
+
+# Uploads
+/uploads/
+!/uploads/.gitkeep
+!/uploads/.htaccess
+!/uploads/index.html
 
 # Debug
 /debug/

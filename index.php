@@ -1,47 +1,54 @@
 <?php
 require_once 'config.php';
+require_once 'auth.php';
 session_start();
+
+// Require authentication for all pages
+Auth::requireLogin();
 
 // Get statistics and recent incidents
 try {
-    // Get distinct issue counts by service
+    // Get total incident count
     $total_query = $pdo->query("
-        SELECT COUNT(DISTINCT CONCAT(service_id, '-', root_cause, '-', status)) 
-        FROM issues_reported
+        SELECT COUNT(*) as total_incidents FROM incidents
     ");
     $total = $total_query->fetchColumn();
     
-    // Resolved incidents (distinct by service and root cause)
+    // Resolved incidents
     $resolved_query = $pdo->query("
-        SELECT COUNT(DISTINCT CONCAT(service_id, '-', root_cause)) 
-        FROM issues_reported 
+        SELECT COUNT(*) as resolved_incidents 
+        FROM incidents 
         WHERE status = 'resolved'
     ");
     $resolved = $resolved_query->fetchColumn();
     
-    // Pending incidents (distinct by service and root cause)
+    // Pending incidents
     $pending_query = $pdo->query("
-        SELECT COUNT(DISTINCT CONCAT(service_id, '-', root_cause)) 
-        FROM issues_reported 
+        SELECT COUNT(*) as pending_incidents 
+        FROM incidents 
         WHERE status = 'pending'
     ");
     $pending = $pending_query->fetchColumn();
     
-    // Get services with reported issues, grouped by service with all companies
+    // Get recent incidents with affected companies
     $recent_incidents = $pdo->query("
         SELECT 
+            i.incident_id,
             s.service_name,
             s.service_id,
             GROUP_CONCAT(DISTINCT c.company_name ORDER BY c.company_name) as company_names,
-            COUNT(DISTINCT i.issue_id) as incident_count,
-            MAX(i.created_at) as date_reported,
-            MAX(CASE WHEN i.status = 'resolved' THEN i.updated_at ELSE NULL END) as date_resolved,
-            GROUP_CONCAT(DISTINCT i.status) as statuses
-        FROM issues_reported i
+            COUNT(DISTINCT iac.company_id) as company_count,
+            i.created_at as date_reported,
+            i.resolved_at as date_resolved,
+            i.status,
+            i.impact_level,
+            i.root_cause
+        FROM incidents i
         JOIN services s ON i.service_id = s.service_id
-        JOIN companies c ON i.company_id = c.company_id
-        GROUP BY s.service_id, s.service_name
-        ORDER BY date_reported DESC, s.service_name
+        JOIN incident_affected_companies iac ON i.incident_id = iac.incident_id
+        JOIN companies c ON iac.company_id = c.company_id
+        GROUP BY i.incident_id, s.service_name, s.service_id, i.created_at, i.resolved_at, i.status, i.impact_level, i.root_cause
+        ORDER BY i.created_at DESC
         LIMIT 10
     ")->fetchAll(PDO::FETCH_ASSOC);
     
@@ -175,15 +182,10 @@ try {
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($recent_incidents as $incident): 
-                                        // Get the first status from the comma-separated list as the main status for display
-                                        $statuses = !empty($incident['statuses']) ? explode(',', $incident['statuses']) : [];
-                                        $mainStatus = !empty($statuses) ? $statuses[0] : '';
-                                        
                                         $statusClass = [
                                             'pending' => 'bg-yellow-100 text-yellow-800',
-                                            'resolved' => 'bg-green-100 text-green-800',
-                                            'investigating' => 'bg-blue-100 text-blue-800'
-                                        ][$mainStatus] ?? 'bg-gray-100 text-gray-800';
+                                            'resolved' => 'bg-green-100 text-green-800'
+                                        ][$incident['status']] ?? 'bg-gray-100 text-gray-800';
                                     ?>
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
@@ -229,34 +231,14 @@ try {
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                                 <?php 
-                                                    $statuses = !empty($incident['statuses']) ? explode(',', $incident['statuses']) : [];
+                                                    $statusClass = [
+                                                        'pending' => 'bg-yellow-100 text-yellow-800',
+                                                        'resolved' => 'bg-green-100 text-green-800'
+                                                    ][$incident['status']] ?? 'bg-gray-100 text-gray-800';
                                                     
-                                                    if (empty($statuses)) {
-                                                        echo '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">No Issues</span>';
-                                                    } else {
-                                                        // Show the most severe status only (no count)
-                                                        $statusOrder = ['pending' => 1, 'investigating' => 2, 'resolved' => 3];
-                                                        $currentStatus = '';
-                                                        $currentPriority = PHP_INT_MAX;
-                                                        
-                                                        foreach ($statuses as $status) {
-                                                            $priority = $statusOrder[$status] ?? PHP_INT_MAX;
-                                                            if ($priority < $currentPriority) {
-                                                                $currentStatus = $status;
-                                                                $currentPriority = $priority;
-                                                            }
-                                                        }
-                                                        
-                                                        $statusClass = [
-                                                            'pending' => 'bg-yellow-100 text-yellow-800',
-                                                            'resolved' => 'bg-green-100 text-green-800',
-                                                            'investigating' => 'bg-blue-100 text-blue-800'
-                                                        ][$currentStatus] ?? 'bg-gray-100 text-gray-800';
-                                                        
-                                                        echo '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ' . $statusClass . '">' . 
-                                                             ucfirst($currentStatus) . 
-                                                             '</span>';
-                                                    }
+                                                    echo '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ' . $statusClass . '">' . 
+                                                         ucfirst($incident['status']) . 
+                                                         '</span>';
                                                 ?>
                                             </td>
                                         </tr>

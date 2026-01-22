@@ -1,11 +1,15 @@
 <?php
 require_once 'config.php';
+require_once 'auth.php';
 require_once 'vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 session_start();
+
+// Require authentication for all pages
+Auth::requireLogin();
 
 // Default values
 $companyId = $_GET['company_id'] ?? null;
@@ -35,28 +39,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $companyId) {
     $slaStmt->execute([$companyId]);
     $slaTarget = $slaStmt->fetch(PDO::FETCH_COLUMN) ?: 99.99;
     
-    // Get all issues for the company with optional downtime data
+    // Get all incidents for the company with optional downtime data
     $stmt = $pdo->prepare("
         SELECT 
-            ir.*,
+            i.*,
             s.service_name,
             s.service_id,
             di.incident_id,
-            COALESCE(di.actual_start_time, ir.created_at) as actual_start_time,
+            COALESCE(di.actual_start_time, i.created_at) as actual_start_time,
             di.actual_end_time,
             di.downtime_minutes,
             di.is_planned,
             di.downtime_category
-        FROM issues_reported ir
-        LEFT JOIN services s ON ir.service_id = s.service_id
-        LEFT JOIN downtime_incidents di ON ir.issue_id = di.issue_id
-        WHERE ir.company_id = ? 
+        FROM incidents i
+        JOIN incident_affected_companies iac ON i.incident_id = iac.incident_id
+        LEFT JOIN services s ON i.service_id = s.service_id
+        LEFT JOIN downtime_incidents di ON i.incident_id = di.incident_id
+        WHERE iac.company_id = ? 
         AND (
-            (ir.created_at BETWEEN ? AND ?)  -- Created in range
-            OR (ir.status = 'resolved' AND ir.updated_at BETWEEN ? AND ?)  -- Resolved in range
-            OR (ir.created_at <= ? AND (ir.status = 'pending' OR ir.updated_at >= ?))  -- Ongoing during range
+            (i.created_at BETWEEN ? AND ?)  -- Created in range
+            OR (i.status = 'resolved' AND i.updated_at BETWEEN ? AND ?)  -- Resolved in range
+            OR (i.created_at <= ? AND (i.status = 'pending' OR i.updated_at >= ?))  -- Ongoing during range
         )
-        ORDER BY ir.created_at DESC
+        ORDER BY i.created_at DESC
     ");
     
     $startDateTime = $startDate . ' 00:00:00';
